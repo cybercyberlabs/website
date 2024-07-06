@@ -62,6 +62,17 @@
             flex-direction: column;
             justify-content: flex-end;
         }
+        
+        ul {
+	    list-style-type: none;
+	    padding-left: 20; /* Optional: remove default padding */
+	    margin: 0; /* Optional: remove default margin */
+	}
+
+	li {
+	    list-style-type: none; /* This can also be applied directly to <li> */
+	}
+
     </style>
 </head>
 <body>
@@ -79,26 +90,67 @@
     </div>
 
     <script>
-        function handleCommand() {
-            const input = document.getElementById('userInput').value;
-            const terminalBody = document.getElementById('terminalBody');
+        function xorEncryptDecrypt(input, key) {
+    let output = '';
+    for (let i = 0; i < input.length; i++) {
+        output += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    }
+    return output;
+}
 
-            if (input.trim()) {
-                const newCommand = document.createElement('p');
-                newCommand.className = 'command';
-                newCommand.textContent = `user@cybercyberlabs.com:~$ ${input}`;
-                terminalBody.appendChild(newCommand);
+function base64Encode(input) {
+    return btoa(input);
+}
 
-                const newResponse = document.createElement('p');
-                newResponse.className = 'response';
-                newResponse.innerHTML = 'Command not recognized. For inquiries, please contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>';
-                terminalBody.appendChild(newResponse);
+function base64Decode(input) {
+    return atob(input);
+}
 
-                terminalBody.scrollTop = terminalBody.scrollHeight;
-            }
+function handleCommand() {
+    const input = document.getElementById('userInput').value.trim();
+    const terminalBody = document.getElementById('terminalBody');
 
-            document.getElementById('userInput').value = '';
+    const commands = {
+        "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting your digital world.",
+        "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
+        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>help: <ul><li>Display this help message</li></ul>',
+        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.'
+    };
+
+    const key = "cybercyberlabs :heart: burekas";
+
+    const encryptedHackCommand = 'CxgBDg==';
+    const encryptedHackResponse = 'OhYXQgAGWQNFERkTCxxVSUgKDxdYGkEQEBxCH0EKDAxdRTEMFxYEERhBFwAAUw5FGB0BGkYHEB5FEg4GRAsHRQcTWRYKUgUVTA==';
+
+    const decodedHackCommand = xorEncryptDecrypt(base64Decode(encryptedHackCommand), key);
+    const decodedHackResponse = xorEncryptDecrypt(base64Decode(encryptedHackResponse), key);
+
+    if (input) {
+        const newCommand = document.createElement('p');
+        newCommand.className = 'command';
+        newCommand.textContent = `user@cyberconsulting:~$ ${input}`;
+        terminalBody.appendChild(newCommand);
+
+        const newResponse = document.createElement('p');
+        newResponse.className = 'response';
+
+        if (commands[input.toLowerCase()]) {
+            newResponse.innerHTML = commands[input.toLowerCase()];
+        } else if (input.toLowerCase() === decodedHackCommand) {
+            newResponse.innerHTML = decodedHackResponse;
+        } else {
+            newResponse.innerHTML = 'Command not recognized. For inquiries, please contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>';
         }
+
+        terminalBody.appendChild(newResponse);
+        terminalBody.scrollTop = terminalBody.scrollHeight;
+    }
+
+    document.getElementById('userInput').value = '';
+}
+
+
+
     </script>
 </body>
 </html>

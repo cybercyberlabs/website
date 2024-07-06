@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberCyber Labs</title>
+    <style>
+        body {
+            background-color: #000;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            height: 95vh;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 10px;
+        }
+
+        .terminal {
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .command, .response, .prompt span, .prompt input {
+            color: #00ff00;
+        }
+
+        .command {
+            margin: 0;
+        }
+
+        a {
+            color: #00ff00;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .prompt {
+            margin: 20px 0 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .prompt input {
+            background: none;
+            border: none;
+            color: #00ff00;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1em;
+            flex: 1;
+            outline: none;
+        }
+
+        .terminal-body {
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+    </style>
+</head>
+<body>
+    <div class="terminal">
+        <div class="terminal-body" id="terminalBody">
+            <p class="command">Welcome to CyberCyber Labs</p>
+            <p class="command">Your Friendly Neighborhood Cyber Experts</p>
+            <p class="command">Here to Demystify Digital Security for You.</p>
+            <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a></p>
+        </div>
+        <div class="prompt">
+            <span>user@cybercyberlabs.com:~$</span>
+            <input type="text" id="userInput" autofocus onkeydown="if(event.key === 'Enter') handleCommand()">
+        </div>
+    </div>
+
+    <script>
+        function handleCommand() {
+            const input = document.getElementById('userInput').value;
+            const terminalBody = document.getElementById('terminalBody');
+
+            if (input.trim()) {
+                const newCommand = document.createElement('p');
+                newCommand.className = 'command';
+                newCommand.textContent = `user@cybercyberlabs.com:~$ ${input}`;
+                terminalBody.appendChild(newCommand);
+
+                const newResponse = document.createElement('p');
+                newResponse.className = 'response';
+                newResponse.innerHTML = 'Command not recognized. For inquiries, please contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>';
+                terminalBody.appendChild(newResponse);
+
+                terminalBody.scrollTop = terminalBody.scrollHeight;
+            }
+
+            document.getElementById('userInput').value = '';
+        }
+    </script>
+</body>
+</html>
+

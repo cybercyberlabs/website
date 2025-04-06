@@ -5,74 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberCyber Labs</title>
     <style>
-        body {
-            background-color: #000;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
-            height: 95vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-            padding: 10px;
-        }
-
-        .terminal {
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .command, .response, .prompt span, .prompt input {
-            color: #00ff00;
-        }
-
-        .command {
-            margin: 0;
-        }
-
-        a {
-            color: #00ff00;
-            text-decoration: none;
-        }
-
-        a:hover {
-            text-decoration: underline;
-        }
-
-        .prompt {
-            margin: 20px 0 0;
-            display: flex;
-            align-items: center;
-        }
-
-        .prompt input {
-            background: none;
-            border: none;
-            color: #00ff00;
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 1em;
-            flex: 1;
-            outline: none;
-        }
-
-        .terminal-body {
-            overflow-y: auto;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: flex-end;
-        }
-        
-        ul {
-	    list-style-type: none;
-	    padding-left: 20; /* Optional: remove default padding */
-	    margin: 0; /* Optional: remove default margin */
-	}
-
-	li {
-	    list-style-type: none; /* This can also be applied directly to <li> */
-	}
-
+        .prompt input,body{color:#0f0;font-family:'Courier New',Courier,monospace}.prompt,body{display:flex}.command,body,ul{margin:0}li,ul{list-style-type:none}body{background-color:#000;height:95vh;flex-direction:column;justify-content:flex-end;padding:10px}.terminal{width:100%;box-sizing:border-box}.command,.prompt input,.prompt span,.response{color:#0f0}a{color:#0f0;text-decoration:none}a[href$=".pdf"]{text-decoration:underline;}a:hover{text-decoration:underline}.prompt{margin:20px 0 0;align-items:center}.prompt input{background:0 0;border:none;font-size:1em;flex:1;outline:0}.terminal-body{overflow-y:auto;flex:1;display:flex;flex-direction:column;justify-content:flex-end}ul{padding-left:20}
     </style>
 </head>
 <body>
@@ -82,7 +15,13 @@
             <p class="command">Your Friendly Neighborhood Cyber Experts</p>
             <p class="command">Here to Demystify Digital Security for You.</p>
             <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a></p>
-	    <p class="command"><br/>Type "help" for options</p>
+            <p class="command"><br/>Recent work:
+                <ul>
+                    <li><a href="reports/Salted_Leeches.pdf" target="_blank">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a></li>
+                    <li><a href="reports/Shiny_Nemesis.pdf" target="_blank">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a></li>
+                </ul>
+            </p>
+            <p class="command"><br/>Type "help" for options</p>
         </div>
         <div class="prompt">
             <span>user@cybercyberlabs.com:~$</span>
@@ -91,13 +30,13 @@
     </div>
 
     <script>
-        function xorEncryptDecrypt(input, key) {
-    let output = '';
-    for (let i = 0; i < input.length; i++) {
-        output += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+    function xorEncryptDecrypt(input, key) {
+        let output = '';
+        for (let i = 0; i < input.length; i++) {
+            output += String.fromCharCode(input.charCodeAt(i) ^ key.charCodeAt(i % key.length));
+        }
+        return output;
     }
-    return output;
-}
 
 function base64Encode(input) {
     return btoa(input);
@@ -112,10 +51,11 @@ function handleCommand() {
     const terminalBody = document.getElementById('terminalBody');
 
     const commands = {
-        "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting your digital world.",
+        "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>help: <ul><li>Display this help message</li></ul>',
-        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.'
+        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>help: <ul><li>Display this help message</li></ul>',
+        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.',
+        "work": '<ul><li><a href="reports/Shiny_Nemesis.pdf" target="_blank">Shiny Hunters - mass scanning effort targeting AWS customers</a></li></ul>'
     };
 
     const key = "cybercyberlabs :heart: burekas";
@@ -129,7 +69,7 @@ function handleCommand() {
     if (input) {
         const newCommand = document.createElement('p');
         newCommand.className = 'command';
-        newCommand.textContent = `user@cyberconsulting:~$ ${input}`;
+        newCommand.textContent = `user@cybercyberlabs.com:~$ ${input}`;
         terminalBody.appendChild(newCommand);
 
         const newResponse = document.createElement('p');
@@ -150,6 +90,7 @@ function handleCommand() {
     document.getElementById('userInput').value = '';
 }
 
+window.onclick = () => {document.getElementById('userInput').focus()}
 
 
     </script>

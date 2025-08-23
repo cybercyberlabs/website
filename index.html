@@ -79,9 +79,10 @@ function handleCommand() {
         "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "cybercyber": "CyberCyber to you too!",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>help: <ul><li>Display this help message</li></ul>',
+        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>who: <ul><li>Meet the team</li></ul><li>help: <ul><li>Display this help message</li></ul>',
         "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.',
         "work": generateWorkHTML(),
+        "who": '<ul><li>Noam Rotem - Building systems by day, breaking them by night (pastries optional).</li><li>Ran Locar - Data scientist</li></ul>',
         "clear": () => { 
             document.getElementById('userInput').value = ' ';
             location.reload(); 

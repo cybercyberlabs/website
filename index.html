@@ -23,7 +23,7 @@
                   ░██                                                  ░██                                                                             
             ░███████                                             ░███████                                                                              
                                                                                                                                                                    </pre>
-            <p class="command">Your Friendly Neighborhood Cyber Experts</p>
+            <p class="command">Your Friendly Neighborhood Cyber Security Researchers</p>
             <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com" class="underlined">contact@cybercyberlabs.com</a></p>
             <p class="command"><br/>Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" class="underlined">cybercyber.co.il</a>.</p>
             <p class="command"><br/>Recent work:
@@ -32,7 +32,7 @@
             </p>
             <p class="command">Tools:
                 <ul>
-                    <li><a href="https://addons.mozilla.org/en-US/firefox/addon/ferretwatch/" target="_blank" class="underlined">FerretWatch</a> - a firefox extension that notifies you when you browse a page with exposed credentials</li>
+                    <li><a href="https://addons.mozilla.org/addon/ferretwatch/" target="_blank" class="underlined">FerretWatch</a> - a firefox extension that notifies you when you browse a page with exposed credentials</li>
                 </ul>
             </p>
             <p class="command"><br/>Type "help" for options</p>
@@ -50,9 +50,21 @@
         '<a href="reports/Shiny_Nemesis.pdf" target="_blank" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a>'
     ];
 
+    // Who content array - shared between command and future use
+    const whoContent = [
+        'Noam Rotem - Building systems by day, breaking them by night (pastries optional).',
+        'Ran Locar - Data scientist',
+        'Ran Bar-Zik - Senior Software architect at CyberArk, Journalist at TheMarker, lecturer at Ono Academic College and Haifa University, Blogger at internet-israel.com.'
+    ];
+
     // Generate work HTML from array
     function generateWorkHTML() {
         return '<ul>' + workContent.map(item => `<li>${item}</li>`).join('') + '</ul>';
+    }
+
+    // Generate who HTML from array
+    function generateWhoHTML() {
+        return '<ul>' + whoContent.map(item => `<li>${item}</li>`).join('') + '</ul>';
     }
 
     function xorEncryptDecrypt(input, key) {
@@ -82,7 +94,7 @@ function handleCommand() {
         "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>who: <ul><li>Meet the team</li></ul><li>help: <ul><li>Display this help message</li></ul>',
         "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.',
         "work": generateWorkHTML(),
-        "who": '<ul><li>Noam Rotem - Building systems by day, breaking them by night (pastries optional).</li><li>Ran Locar - Data scientist</li></ul>',
+        "who": generateWhoHTML(),
         "clear": () => { 
             document.getElementById('userInput').value = ' ';
             location.reload(); 

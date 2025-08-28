@@ -31,8 +31,7 @@
                 </ul>
             </p>
             <p class="command">Tools:
-                <ul>
-                    <li><a href="https://addons.mozilla.org/addon/ferretwatch/" target="_blank" class="underlined">FerretWatch</a> - a firefox extension that notifies you when you browse a page with exposed credentials</li>
+                <ul id="toolsList">
                 </ul>
             </p>
             <p class="command"><br/>Type "help" for options</p>
@@ -57,6 +56,26 @@
         'Ran Bar-Zik - Senior Software architect at CyberArk, Journalist at TheMarker, lecturer at Ono Academic College and Haifa University, Blogger at internet-israel.com.'
     ];
 
+    // Help content array - structured command information
+    const helpContent = [
+        { command: 'about', description: 'Information about us' },
+        { command: 'contact', description: 'How to get in touch' },
+        { command: 'work', description: 'Display recent work' },
+        { command: 'who', description: 'Meet the team' },
+        { command: 'tools', description: 'Our security tools' },
+                { command: 'clear', description: 'Clear the terminal' },
+        { command: 'help', description: 'Display this help message' }
+    ];
+
+    // Tools content array - shared between initial page load and tools command
+    const toolsContent = [
+        {
+            name: 'FerretWatch',
+            url: 'https://addons.mozilla.org/addon/ferretwatch/',
+            description: 'a firefox extension that notifies you when you browse a page with exposed credentials or an open bucket'
+        }
+    ];
+
     // Generate work HTML from array
     function generateWorkHTML() {
         return '<ul>' + workContent.map(item => `<li>${item}</li>`).join('') + '</ul>';
@@ -65,6 +84,56 @@
     // Generate who HTML from array
     function generateWhoHTML() {
         return '<ul>' + whoContent.map(item => `<li>${item}</li>`).join('') + '</ul>';
+    }
+
+    // Generate help HTML from array
+    function generateHelpHTML() {
+        return 'Available commands:<ul>' + helpContent.map(item => 
+            `<li>${item.command}: <ul><li>${item.description}</li></ul>`
+        ).join('') + '</ul>';
+    }
+
+    // Generate tools HTML from array
+    function generateToolsHTML() {
+        return '<ul>' + toolsContent.map(item => 
+            `<li><a href="${item.url}" target="_blank" class="underlined">${item.name}</a> - ${item.description}</li>`
+        ).join('') + '</ul>';
+    }
+
+    // Generate ls-style command listing
+    function generateLsHTML(args = []) {
+        const currentDate = new Date().toLocaleDateString('en-US', { 
+            month: 'short', 
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+        
+        // Check for long format (-l) flag
+        const longFormat = args.some(arg => arg.includes('l'));
+        // Check for all files (-a) flag  
+        const showAll = args.some(arg => arg.includes('a'));
+        
+        let commands = helpContent.map(item => item.command);
+        
+        // Add hidden files if -a flag is used
+        if (showAll) {
+            commands = ['.', '..', '.bashrc', '.profile', ...commands];
+        }
+        
+        if (longFormat) {
+            return commands.map(cmd => {
+                const isHidden = cmd.startsWith('.');
+                const isExecutable = cmd === 'clear';
+                const permissions = isHidden ? 'drwxr-xr-x' : (isExecutable ? '-rwxr-xr-x' : '-rw-r--r--');
+                const size = Math.floor(Math.random() * 2048) + 256;
+                return `${permissions} 1 user cybercyberlabs ${size.toString().padStart(4)} ${currentDate} ${cmd}`;
+            }).join('<br>');
+        } else {
+            // Simple format - just command names in columns
+            return commands.join('&nbsp;&nbsp;&nbsp;&nbsp;');
+        }
     }
 
     function xorEncryptDecrypt(input, key) {
@@ -91,10 +160,12 @@ function handleCommand() {
         "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "cybercyber": "CyberCyber to you too!",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>who: <ul><li>Meet the team</li></ul><li>help: <ul><li>Display this help message</li></ul>',
-        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.',
+        "help": generateHelpHTML(),
+        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">cybercyber.co.il</a>.',
         "work": generateWorkHTML(),
         "who": generateWhoHTML(),
+        "whoami": 'You are the ever-changing awareness experiencing itself through the story you call "me."',
+        "tools": generateToolsHTML(),
         "clear": () => { 
             document.getElementById('userInput').value = ' ';
             location.reload(); 
@@ -118,12 +189,26 @@ function handleCommand() {
         const newResponse = document.createElement('p');
         newResponse.className = 'response';
 
-        if (commands[input.toLowerCase()]) {
-            if (typeof commands[input.toLowerCase()] === 'function') {
-                commands[input.toLowerCase()]();
+        // Parse command and arguments
+        const inputParts = input.toLowerCase().split(' ');
+        let command = inputParts[0];
+        let args = inputParts.slice(1);
+        
+        // Handle "cat" prefix - if first word is "cat", use the second word as the actual command
+        if (command === 'cat' && args.length > 0) {
+            command = args[0];
+            args = args.slice(1);
+        }
+
+        // Handle ls command with arguments
+        if (command === 'ls') {
+            newResponse.innerHTML = generateLsHTML(args);
+        } else if (commands[command]) {
+            if (typeof commands[command] === 'function') {
+                commands[command]();
                 return;
             } else {
-                newResponse.innerHTML = commands[input.toLowerCase()];
+                newResponse.innerHTML = commands[command];
             }
         } else if (input.toLowerCase() === decodedHackCommand) {
             newResponse.innerHTML = decodedHackResponse;
@@ -140,13 +225,20 @@ function handleCommand() {
 
 window.onclick = () => {document.getElementById('userInput').focus()}
 
-// Populate work list on page load
+// Populate work and tools lists on page load
 document.addEventListener('DOMContentLoaded', function() {
     const workList = document.getElementById('workList');
     workContent.forEach(item => {
         const li = document.createElement('li');
         li.innerHTML = item;
         workList.appendChild(li);
+    });
+    
+    const toolsList = document.getElementById('toolsList');
+    toolsContent.forEach(item => {
+        const li = document.createElement('li');
+        li.innerHTML = `<a href="${item.url}" target="_blank" class="underlined">${item.name}</a> - ${item.description}`;
+        toolsList.appendChild(li);
     });
 });
 

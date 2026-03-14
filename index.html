@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberCyber Labs</title>
     <style>
-        .prompt input,body{color:#0f0;font-family:'Courier New',Courier,monospace}.prompt,body{display:flex}.command,body,ul{margin:0}li,ul{list-style-type:none}body{background-color:#000;height:95vh;flex-direction:column;justify-content:flex-end;padding:10px}.terminal{width:100%;box-sizing:border-box}.command,.prompt input,.prompt span,.response{color:#0f0}a{color:#0f0;text-decoration:none}a:hover{text-decoration:underline}.underlined{text-decoration:underline;}.logo{color:#0f0;font-family:'Courier New',Courier,monospace;font-size:0.7em;line-height:1;white-space:pre;overflow-x:auto;margin:10px 0;}.prompt{margin:20px 0 0;align-items:center}.prompt input{background:0 0;border:none;font-size:1em;flex:1;outline:0}.terminal-body{overflow-y:auto;flex:1;display:flex;flex-direction:column;justify-content:flex-end}ul{padding-left:20}
+        .prompt input,body{color:#0f0;font-family:'Courier New',Courier,monospace}.prompt,body{display:flex}.command,body,ul{margin:0}li,ul{list-style-type:none}body{background-color:#000;height:95vh;flex-direction:column;justify-content:flex-end;padding:10px}.terminal{width:100%;box-sizing:border-box}.command,.prompt input,.prompt span,.response{color:#0f0}a{color:#0f0;text-decoration:none}a:hover{text-decoration:underline}.underlined{text-decoration:underline;}.logo{color:#0f0;font-family:'Courier New',Courier,monospace;font-size:0.7em;line-height:1;white-space:pre;overflow-x:auto;margin:10px 0;}.prompt{margin:20px 0 0;align-items:center}.input-wrap{position:relative;flex:1;display:flex;align-items:center}.prompt input{background:0 0;border:none;font-size:1em;flex:1;caret-color:transparent;outline:none}.prompt:focus-within{text-shadow:0 0 6px #0f0}.prompt:focus-within .cursor{display:inline-block}.input-mirror{position:absolute;left:0;top:50%;transform:translateY(-50%);visibility:hidden;white-space:pre;pointer-events:none}.cursor{display:none;position:absolute;top:50%;left:0;transform:translateY(-50%);width:.65em;height:1em;background:#0f0;box-shadow:0 0 6px #0f0;animation:blink 1s steps(1,end) infinite;pointer-events:none}@keyframes blink{50%{opacity:0}}.terminal-body{overflow-y:auto;flex:1;display:flex;flex-direction:column;justify-content:flex-end}ul{padding-left:20}
     </style>
 </head>
 <body>
@@ -23,32 +23,36 @@
                   ░██                                                  ░██                                                                             
             ░███████                                             ░███████                                                                              
                                                                                                                                                                    </pre>
-            <p class="command">Your Friendly Neighborhood Cyber Experts</p>
+            <p class="command">Command Line Curiosity</p>
             <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com" class="underlined">contact@cybercyberlabs.com</a></p>
-            <p class="command"><br/>Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" class="underlined">cybercyber.co.il</a>.</p>
-            <p class="command"><br/>Recent work:
+            <p class="command"><br/>Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer" class="underlined">cybercyber.co.il</a>.</p>
+            <div class="command"><br/>Recent work:
                 <ul id="workList">
                 </ul>
-            </p>
-            <p class="command">Tools:
+            </div>
+            <div class="command">Tools:
                 <ul>
-                    <li><a href="https://addons.mozilla.org/en-US/firefox/addon/ferretwatch/" target="_blank" class="underlined">FerretWatch</a> - a firefox extension that notifies you when you browse a page with exposed credentials</li>
-                    <li><a href="https://cybercyberlabs.github.io/s3er-website/" target="_blank" class="underlined">S3er</a> - Search exposed storage like an analyst, not a crawler.</li>
+                    <li><a href="https://addons.mozilla.org/en-US/firefox/addon/ferretwatch/" target="_blank" rel="noopener noreferrer" class="underlined">FerretWatch</a> - a firefox extension that notifies you when you browse a page with exposed credentials</li>
+                    <li><a href="https://cybercyberlabs.github.io/s3er-website/" target="_blank" rel="noopener noreferrer" class="underlined">S3er</a> - Search exposed storage like an analyst, not a crawler.</li>
                 </ul>
-            </p>
+            </div>
             <p class="command"><br/>Type "help" for options</p>
         </div>
         <div class="prompt">
             <span>user@cybercyberlabs.com:~$ </span>
-            <input type="text" id="userInput" autofocus onkeydown="if(event.key === 'Enter') handleCommand()">
+            <div class="input-wrap">
+                <input type="text" id="userInput" aria-label="Terminal command input" autofocus onkeydown="if(event.key === 'Enter') handleCommand()">
+                <span class="input-mirror" id="inputMirror" aria-hidden="true"></span>
+                <span class="cursor" id="inputCursor" aria-hidden="true"></span>
+            </div>
         </div>
     </div>
 
     <script>
     // Work content array - shared between initial page load and work command
     const workContent = [
-        '<a href="reports/Salted_Leeches.pdf" target="_blank" class="underlined">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a>',
-        '<a href="reports/Shiny_Nemesis.pdf" target="_blank" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a>'
+        '<a href="reports/Salted_Leeches.pdf" target="_blank" rel="noopener noreferrer" class="underlined">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a>',
+        '<a href="reports/Shiny_Nemesis.pdf" target="_blank" rel="noopener noreferrer" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a>'
     ];
 
     // Generate work HTML from array
@@ -64,12 +68,17 @@
         return output;
     }
 
-function base64Encode(input) {
-    return btoa(input);
-}
-
 function base64Decode(input) {
     return atob(input);
+}
+
+function syncCursor() {
+    const input = document.getElementById('userInput');
+    const mirror = document.getElementById('inputMirror');
+    const cursor = document.getElementById('inputCursor');
+
+    mirror.textContent = input.value.replace(/ /g, '\u00a0');
+    cursor.style.left = `${Math.max(0, mirror.offsetWidth - input.scrollLeft)}px`;
 }
 
 function handleCommand() {
@@ -80,8 +89,8 @@ function handleCommand() {
         "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "cybercyber": "CyberCyber to you too!",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: <ul><li>Information about us</li></ul><li>contact: <ul><li>How to get in touch</li></ul><li>work: <ul><li>Display recent work</li></ul><li>who: <ul><li>Meet the team</li></ul><li>help: <ul><li>Display this help message</li></ul>',
-        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank">this link</a>.',
+        "help": 'Available commands:<ul><li>about: Information about us</li><li>contact: How to get in touch</li><li>work: Display recent work</li><li>who: Meet the team</li><li>help: Display this help message</li><li>podcast: Open the podcast page</li><li>clear: Reload the terminal</li></ul>',
+        "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer">this link</a>.',
         "work": generateWorkHTML(),
         "who": '<ul><li>Noam Rotem - Building systems by day, breaking them by night (pastries optional).</li><li>Ran Locar - Data scientist</li></ul>',
         "clear": () => { 
@@ -125,18 +134,26 @@ function handleCommand() {
     }
 
     document.getElementById('userInput').value = '';
+    syncCursor();
 }
 
-window.onclick = () => {document.getElementById('userInput').focus()}
+window.addEventListener('click', () => {document.getElementById('userInput').focus()})
 
 // Populate work list on page load
 document.addEventListener('DOMContentLoaded', function() {
     const workList = document.getElementById('workList');
+    const userInput = document.getElementById('userInput');
+
     workContent.forEach(item => {
         const li = document.createElement('li');
         li.innerHTML = item;
         workList.appendChild(li);
     });
+
+    userInput.addEventListener('input', syncCursor);
+    userInput.addEventListener('keyup', syncCursor);
+    userInput.addEventListener('click', syncCursor);
+    syncCursor();
 });
 
 

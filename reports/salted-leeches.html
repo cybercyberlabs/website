@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salted Leeches - CyberCyber Labs</title>
+    <link rel="stylesheet" href="../report.css">
+</head>
+<body>
+<div class="vim">
+<div class="buf">
+<article>
+<h1>Salted Leeches</h1>
+<p class="deck">An investigation into a Chinese online scam ring infrastructure</p>
+<h2>Tl;dr</h2>
+<p>CyberCyberLabs security researches Noam Rotem and Ran Locar have exposed a large scam operation believed to be operated by a Chinese criminal organizations and targeting vulnerable gig-job seekers in the US, UK, and Europe. The operation uses somewhat known brands, usually of rising start-ups but sometimes established companies like Booking, Expedia, and Spotify, and creates fake websites masquerading as these companies. It then publishes "remote work" ads, sometimes on fake websites they build themselves, and directly contact victims via WhatsApp. The research exposes dozens of platforms used to scam people in a "recharge scam", providing a unique view of their network infrastructure, back-office systems, crypto wallets containing tens of millions of US dollars siphoned from the victims, as well as their entire database of operations, transactions, and identities. It also includes WhatsApp chats between the victims and the operators, along with technical evidence pointing towards Chinese individuals operating from Hong Kong,mainland China, Cambodia, and Myanmar.</p>
+<p>It is very important to stress: None of the companies mentioned in this report are associated with the scammers. Their names were simply dragged into the scam by the operators of the scam network.</p>
+<p>None of the companies were breached, nor did the operators of this scam networks get a foothold inside their infrastructure. They only leveraged their brand reputation in order to scam innocent people looking for a job.</p>
+<p>Full disclosure: The criminal organization targeted a company where mr. Rotem, one of the authors of this report, is acting as CTO.</p>
+<h2>The scam</h2>
+<p>During the work on this project we have been in contact with several victims who were scammed. They were kind enough to provide us with WhatsApp communication between them and the scammers, as well as inside understanding of the different stages of the scam.</p>
+<p>The following section is a summary of their stories as well as a lot of technical evidence, including access to the scammers back-office systems.</p>
+<h3>Step 1: The Approach</h3>
+<p>Several victims said they were contacted by a WhatsApp account "regarding a recent job application". For example, in Sweden, the scammers used the site worklifthub[.]com, and then moved to employfocushub[.]com to create a trusted context for the initial approach. The domains were registered in late December 2024 and early January 2025, in Turkey and the Bahamas. Other cases used totally legitimate job-seeking websites, so the approach seemed more natural. The texts are always cheerful, full of positive emojis, and almost always reply very quickly.</p>
+<p>The recruiters introduce themselves as employees of a branch in a non-brand company, but one that yields positive google results; these are mostly B2B companies that are not known to the general public, but are known within the industry. If the victim searches for the name of the company, they will find a lot of information from trusted sources. The scammers register multiple domains with permutations around the target company name (they have an affinity to the .top tld) reflecting the type of work. for example, they would register [company]-seo.top and [company]ppc.cc if the "job" is related to SEO or PPC advertising. They also register a unique high-entropy domain to be their back-office gateway.</p>
+<p>The sites are well built, and the victims, who are often blinded by the prospect of employment, are often persuaded that this is a real website.</p>
+<h3>Step 2: The Job</h3>
+<p>All of the platforms we've investigated are very similar in the "jobs" they offer. While the details vary, in most cases the role of the employee is to write reviews to products promoted by the original company. However, these reviews are not going anywhere. there's even an "Automatic Comment" button on some of the sites. Their sole purpose is to keep the victim busy, give them a sense of doing something of value, and to prepare them for the next phase.</p>
+<p>For each review entered by the victims, they receive between 10-70 cents, depending on the industry. There are limits on the number of "tasks" each employee can do per day, usually newcomers have a limit of 50 tasks per day, putting the potential profit from this job at around $5-$35 per day. Still, not bad for an easy work-from-home gig that takes up to an hour to complete</p>
+<h3>Step 3: The Opportunity</h3>
+<p>After a few days of doing the menial work described in the previous step, opportunity knocks.</p>
+<p>When the victim logs in and tries to complete their daily tasks, they are presented with an error. There are not enough funds in their balance to keep working. When they contact customer service (yes, each site has a dedicated customer service system, and a very efficient one at that) they are surprised to find out that they can now make much more money! Instead of getting paid cents for their boring work, they can now make tens, sometimes hundreds of dollars per task.</p>
+<p>There is a small hickup, though. The higher value tasks require a certain balance, which is always slightly above what the user has. If only there was a way for them to get this task done they could triple their investment. High value tasks could include purchasing a product for an end-customer on behalf of the 'company', under the promise that the employee would be rewarded.</p>
+<p>For example, the "company" needs to buy a certain product for a certain client, but alas, they can't do it right now. If only the loyal employee would be able to make this purchase, when the end-customer pays this loyalty would be rewarded greatly. If the employee agrees, they must send a certain type of cryptocurrency (usually ETH tokens like USDC or USDT to a wallet address given to them by the operators. If not, at great risk to themselves, the handlers of the victim are willing to "gift" this money out of the goodness of their heart.</p>
+<p>When the deal goes through, the victim is overjoyed to see his balance increases, and in many cases will issue a withdrawal, which will be fulfilled. When the employee then wants to make another "task", their balance is not high enough, so they need to <strong>re-charge</strong> their balance. This is where the name <strong>re-charge fraud</strong> comes from, and this is exactly how it works. The employee keeps loading their own funds into the scammers wallets just so they can keep on working.</p>
+<h3>Step 4: The slaughter</h3>
+<p>By the time they realize what's going on, their withdrawal requests are ignored, and their accounts are frozen. The victim was butchered, taken for thousands, sometimes tens of thousands of their hard earned currency, and is left with nothing.</p>
+<p>Some of the victims realize the scam when they try to reach out to the real company the scammers are impersonating, only to learn there is no "UK branch", and that the real company had nothing to do with the "work" they were "hired" to do. Going to the police doesn't help either, as the crime was out of the local jurisdiction, and the perpetrators are unknown. This is how the scammers harvest tens of millions of dollars from vulnerable victims, looking for a low paying job, and ending up in a much worse situation than before they started working.</p>
+<h2>The systems</h2>
+<p>Each such operation is split into 2 systems. One is referred to as "the front-end", this is the fake website where the "work" of the employees take place. Let's take for example the website pretending to belong to an asset tokenization platform "Norion".</p>
+<h3>The Front-End</h3>
+<p>This is how the front-end log-in page looks like. Notice the domain "norionppc.top", which is how the "job" is marketed to the victims. "It's an SEO/PPC operation, nothing shady":</p>
+<figure><img src="media/salted-leeches/fig-01.png" alt=""></figure>
+<p>Right after the user logs in, they are presented with what the scammers call a "certificate". A fake image designed to inspire trust. In some cases it's "signed" by the CEO of the company, in this case, it's advertising a $300 million bonus that will be distributed between the employees based on their performance up to $10 million per person:</p>
+<figure><img src="media/salted-leeches/fig-02.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-03.png" alt=""></figure>
+<p>Then an impressive corporate video is displayed, and the employees can start their daily tasks</p>
+<figure><img src="media/salted-leeches/fig-04.png" alt=""></figure>
+<p>the big "work" button in the bottom center of the page, leads the user to a gamified version of what a lemur thinks people who work in an office do:</p>
+<figure><img src="media/salted-leeches/fig-05.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-06.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-07.png" alt=""></figure>
+<p>Clicking on "Start" shows a modal with a "Task". It shows the amount of the transaction, and the expected profit from it.</p>
+<figure><img src="media/salted-leeches/fig-08.png" alt=""></figure>
+<p>Clicking "Submit" simply says "Task submitted", that's all this "work" is. The employee balance is deducted until the transaction is approved, and that's it. The employee now expects a profit of $5.21 to be added to their balance once it's done. $5.21 for clicking a button, not a bad job to have.</p>
+<p>Another part of the "front-end" includes a way to withdraw or deposit funds, as well as seeing the transactions history. Here you can see that the user started off as described in "Step 2" of the scam, making a few cents per "task". They received a $10 "sign-up" bonus at January 25th so that they can start working, and immediately started making money:</p>
+<figure><img src="media/salted-leeches/fig-09.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-10.png" alt=""></figure>
+<p>This is how their "profit" is explained:</p>
+<figure><img src="media/salted-leeches/fig-11.png" alt=""></figure>
+<p>You put it a certain amount ($27 in the example above), you get it back + a commission, in this case, due to the low value of the original transaction, it's 14 cents.</p>
+<p>only 3 hours into the job, the employee is stuck and is convinced to deposit $30 so that they can continue. after this, their commission rises to 30 cents. A 100% increase in just a few hours, not bad.</p>
+<figure><img src="media/salted-leeches/fig-12.png" alt=""></figure>
+<p>However, only 4 days into the work, the commission suddenly spike. no more $0.14, it's now $11.21 per task! a whopping 7907%! this employee is a meteor!</p>
+<figure><img src="media/salted-leeches/fig-13.png" alt=""></figure>
+<p>The employee is ecstatic, deposits are pouring in, until one day - poof - they can't withdraw any more.</p>
+<h3>The Back-End</h3>
+<p>Meanwhile, the operators of the platform, uses a completely different system, they call "The Back-End" or "The Marketing". A dashboard with nice graphs and summaries is presented to the administrators:</p>
+<figure><img src="media/salted-leeches/fig-14.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-15.png" alt=""></figure>
+<p>However, unlike the front-end which is supports no less than 12 languages, the Back-End supports only 2: English and Chinese. Target audiences are clear.</p>
+<table>
+<tr><th><strong>Front-End languages</strong></th><th><strong>Back-End languages</strong></th></tr>
+</table>
+<figure><img src="media/salted-leeches/fig-16.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-17.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-18.png" alt=""></figure>
+<p>It allows full control over the "front-end" and its users, which are called "members", allowing the "users", who are the operators of the scam and their accomplices, full control over their status. They can "gift" funds for users, they can reduce them, freeze them, and watch their behavior:</p>
+<figure><img src="media/salted-leeches/fig-19.png" alt=""></figure>
+<p>The systems we have observed while working on this report hold between hundreds and thousands of "members" each, including their contact details, crypto wallets, IP addresses showing their locations, and the amounts they have lost to the scam. Almost all of the victims are from western countries such as the US, UK, Sweden, Germany, Austria, France, and others.</p>
+<p>The "Users", on the other hand, are from very specific geographies. with names that google translate explains as "Lucky", "Fly", and "Comes with beans" all written in Chinese. "Users" can be either "administrators" or "agents" with the latter have much limited access. the screenshot below is of an Administrator:</p>
+<figure><img src="media/salted-leeches/fig-20.png" alt=""></figure>
+<p>under the "Operation Log", each read, write, and update, is logged with the details of the user who performed it.</p>
+<figure><img src="media/salted-leeches/fig-21.png" alt=""></figure>
+<p>We have downloaded and analyzed all actions performed by the operators, and found that all administrators are working from Cambodia, Hong Kong, Myanmar, and mainland China, whereas the "agents" may be located in the US (New York, New Jersey, Florida, California, are popular locations) and Europe. These agents are acting as recruiters, gaining profits from the people they lure into the scam like any other MLM fraud. We have found several US citizens, among them a self-titled "coach" from Florida who is offering abstinence workshops while working from home to recruit new victims for this Chinese scam operation.</p>
+<p>Looking at the access log of the "Users" (administrators), the accepted language for all of them in the HTTP headers sent on every request to the server is Chinese, further contributing to the attribution.</p>
+<p>Other than that you can find the expected configuration options of any CMS, including the support links and phone numbers, Notifications sent out to all users, Banners for various parts of the front-end platform, and more:</p>
+<figure><img src="media/salted-leeches/fig-22.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-23.png" alt=""></figure>
+<p>From the dates in the database it seems that the operation has been active since at least November of 2023, with records of stolen funds going back to December of that year.</p>
+<p>An administrator of the back-end has almost full control over every part of the scam, including the commission values, service and trading times, minimum and maximum limits for various actions, and more.</p>
+<h3>Telegram</h3>
+<p>Most of the systems reviewed in this report, each on its own dedicated server, use the exact same telegram bot called "Wotlk" to communicate with the "super administrators". Luckily, they provide the key and secret to this bot:</p>
+<figure><img src="media/salted-leeches/fig-24.png" alt=""></figure>
+<p>With these credentials we have listened in on some of their conversations, all in Chinese, collecting member details of the "super group" as they call themselves, sporting Telegram premium memberships.</p>
+<figure><img src="media/salted-leeches/fig-25.png" alt=""></figure>
+<p>and the administrator:</p>
+<figure><img src="media/salted-leeches/fig-26.png" alt=""></figure>
+<p>Some of the messages in this channel are about improvement of the platform (all messages are sent in Chinese, we use Google translate to be able to read them in English): The bonus needs to be added with an effective time (for the delayed issuance function), with a pure front-end display function, without any restrictions, this effective time can be modified. \nIn addition, the front-end bonus is counted whether the current interface can meet the current interface, the amount that has been collected and the amount to be collected and</p>
+<p>I want to add another type to the backend banner management to give the frontend to use when logging in to the page? Will there be an interception?</p>
+<h3>Database access</h3>
+<p>Examining the database, we found that each 'back-end' server hosts its own instance. All of them share the same schema, further establishing that they are running the same platform, but each one has different data inside.</p>
+<figure><img src="media/salted-leeches/fig-27.png" alt=""></figure>
+<p>The administrator UI provides control to all data and settings in the Database.</p>
+<h2>Crypto</h2>
+<p>During our investigation we identified several cryptocurrency wallets used to send and receive funds from this enterprise. We believe we identified one of the master wallets sending hundreds of thousands of dollars worth of crypto to another wallet at address which holds, at the time of writing, over 50 million USD in various tokens, including the trump meme coin:</p>
+<figure><img src="media/salted-leeches/fig-28.png" alt=""></figure>
+<figure><img src="media/salted-leeches/fig-29.png" alt=""></figure>
+<h2>Summary of attribution</h2>
+<p>There are many indicators that point to a the operators of this operation as being connected to China:</p>
+<ol><li>Accepted languages in the HTTP headers of the operator calls are all <code>zh-CN</code>, (on telegram we have seen administrators identifying with <code>zh-hans</code>, a less common Chinese locale) which indicates that the browser, or operating system default language, is Chinese.</li><li>While the front-end system aimed at the victims shows various languages, none of them is Chinese, the back-end system, which is used by the operators, supports English and Chinese, and these languages only. This may point that the operators work in one of those two languages.</li><li>Usernames of the operators are in Chinese characters, spelling words in Chinese.</li><li>Specifically, the administrator of the Telegram group (mumuzibb) is using Chinese, and participates in Chinese chats on Telegram</li></ol>
+<figure><img src="media/salted-leeches/fig-30.png" alt=""></figure>
+<ol><li>The internal communication within the "Super group" on telegram and other platforms is done in Chinese.</li><li>The code contains comments in Chinese</li><li>IP addresses of some of the operators are from China, while other from neighboring Hong Kong, a special administrative region controlled by China.</li><li>Looking at the first operations logs, the first user who set up the "websites" and "users" (other operators), using the user ID 1 and the name wotlk used IP addresses from Hong-Kong, with Chinese locale. Once the initial setup was done by wotlk, he invited user admin who also used Chinese locale, with a Cambodian IP address. Other</li></ol>
+<p>administrators phone numbers start with +95, which is the country code for Myanmar, a known location of Chinese scam factories.</p>
+<ol><li>Telegram channel: communication is in Chinese.</li><li>Crypto wallets are linked to Chinese individuals.</li><li>Some of the file storage uses the Alibaba Cloud, the largest cloud computing company in China.</li></ol>
+<h2>List of domain names and IP addresses</h2>
+<p>Analyzing the first domains we encountered we found that they are hosted on CIDR</p>
+<p>137.220.170.0/24 belonging to CTG Server Limited, a hosting provider operating in South East Asia. Based on our past experience we tried looking for domains with the similar pattern on neighboring IP addresses, as well as other CIDRs belonging to the same provider.</p>
+<p>Using Hurricane Electric (bgp.he.net) and Security Trails (securitytrails.com) reverse IP searches, we compiled a list of domains and IP addresses set up by the fraudsters as part of this scam. The 'impersonated brand' is a best-effort attempt to deduce the brand the site is trying to impersonate, based on logos, name similarity and other graphics</p>
+<table>
+<tr><th><strong>Domain</strong></th><th><strong>Impersonated brand</strong></th><th><strong>Vertical</strong></th></tr>
+<tr><td>neon-ppc.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>neon-seo.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>neon-web.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>neonbusiness.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>neondatainc.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>neonwebsite.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>ngbusinessllc.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>tus2v1fhta.top</td><td>Neon Growth</td><td>Marketing</td></tr>
+<tr><td>rktdatappcllc.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rktmktdosllc.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rocket-marketing-ppc.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rocket-marketing-seo.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rocket-marketing.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rocket-mkt.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>rocketseoinc.com</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>tc5la9xvzm.top</td><td>Rocket Marketing</td><td>Marketing</td></tr>
+<tr><td>evenboundppc.top</td><td>evenbound.com</td><td>Marketing</td></tr>
+<tr><td>evenboundseo.top</td><td>evenbound.com</td><td>Marketing</td></tr>
+<tr><td>rc7odfr90x.top</td><td>evenbound.com</td><td>Marketing</td></tr>
+<tr><td>work.evenboundppc.top</td><td>evenbound.com</td><td>Marketing</td></tr>
+<tr><td>work.evenboundseo.top</td><td>evenbound.com</td><td>Marketing</td></tr>
+<tr><td>foymabphwx.top</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>ppc-rap-chat.top</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>rapchatdatainc.top</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>rapchatdataseo.top</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>rapchatppcspace.com</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>seo-rap-chat.top</td><td>rapchat.com</td><td>Music</td></tr>
+<tr><td>my0x9jorxv.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-business.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-data.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-date.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-dos.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-pcp.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-pcp.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smart-link-seo.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smartlinkbusiness.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smartlinkdigital.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>smartlinkppcinc.top</td><td>Smart Link</td><td>Marketing</td></tr>
+<tr><td>apexarc-ai.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarc-business.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarc-data.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarc-pcp.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarc-ppc.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarc-x.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>apexarcaisite.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>global.apexarcaisite.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>zhtaibjfj8.com</td><td>Apex Arc</td><td>Marketing</td></tr>
+<tr><td>2f3rmggrz1.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>datajasperinc.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>gg2kxe6s67.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>jasperppc.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>jasperseo.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>seojasperllc.top</td><td>Jasper AI</td><td>Marketing</td></tr>
+<tr><td>norionbusiness.top</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>noriondata.com</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>norionpcpinc.top</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>norionppc.top</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>norionseo.top</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>p1ouw3i5wp.top</td><td>norion.com</td><td>Crypto</td></tr>
+<tr><td>d5654g7jij.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>vistarise.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>vistarisebusiness.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>vistarisedata.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>vistariseppc.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>vistariseseo.top</td><td>VistaRise Hospitality Services India</td><td>Travel</td></tr>
+<tr><td>cisiondataspace.com</td><td>cision.com</td><td>Marketing</td></tr>
+<tr><td>cisionpcpinc.com</td><td>cision.com</td><td>Marketing</td></tr>
+<tr><td>cisionppc.top</td><td>cision.com</td><td>Marketing</td></tr>
+<tr><td>n8jhepwdl9.top</td><td>cision.com</td><td>Marketing</td></tr>
+<tr><td>6zw0xaubym.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnect-seo.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnect-x.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnectai.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnectbusiness.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnectdata.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>digitalconnectppc.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>global.digitalconnect-seo.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>global.digitalconnectai.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>global.digitalconnectbusiness.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>global.digitalconnectdata.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>global.digitalconnectppc.com</td><td>Digital Connect</td><td>Marketing</td></tr>
+<tr><td>cognitopsppc.com</td><td>cognitops.com</td><td>Software</td></tr>
+<tr><td>cognitopsseo.com</td><td>cognitops.com</td><td>Software</td></tr>
+<tr><td>q17dkahubn.com</td><td>cognitops.com</td><td>Software</td></tr>
+<tr><td>firstpier-dataseo.com</td><td>firstpier.com</td><td>Marketing</td></tr>
+<tr><td>global.firstpier-dataseo.com</td><td>firstpier.com</td><td>Marketing</td></tr>
+<tr><td>p3et31p3hh.top</td><td>firstpier.com</td><td>Marketing</td></tr>
+<tr><td>delantedata.com</td><td>delante.co</td><td>Marketing</td></tr>
+<tr><td>g4xst1jqj9.top</td><td>delante.co</td><td>Marketing</td></tr>
+<tr><td>ppc-delante.com</td><td>delante.co</td><td>Marketing</td></tr>
+<tr><td>0j10uc2xf6.top</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>5rydfzf73g.com</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>fera.biz</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>fera.ltd</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>global.fera.biz</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>global.fera.ltd</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>tkmallpromohub.top</td><td>fera.ai</td><td>Marketing</td></tr>
+<tr><td>blixauro-ppc.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>blixauro-seo.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>blixaurobusiness.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>blixaurodataspace.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>blixauropcpinc.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>zldty07di5.com</td><td>blixauro.com</td><td>Marketing</td></tr>
+<tr><td>bookingpcp.com</td><td>booking.com</td><td>Travel</td></tr>
+<tr><td>bookingppc.com</td><td>booking.com</td><td>Travel</td></tr>
+<tr><td>expediappc.top</td><td>expedia.com</td><td>Travel</td></tr>
+<tr><td>expediaseo.top</td><td>expedia.com</td><td>Travel</td></tr>
+<tr><td>f1ebp8t25j.com</td><td>expedia.com</td><td>Travel</td></tr>
+<tr><td>j816emy69b.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>ooit5xn0l1.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quant-cast-data.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quant-cast-pcp.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quant-cast-ppc.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quant-cast-seo.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantbusinessgp.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantcastdatainc.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantcastppc.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantcastseo.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantcastseollc.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>quantdatainc.top</td><td>quantcast.com</td><td>Marketing</td></tr>
+<tr><td>backend.roadrunnerseoinc.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rralbumspromo.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrmusicalbumspromo.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrmusicppcspace.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrmusicspacewebplayer.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrrecordsclub.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrrecordsgroupboost.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrrecordsmusicplayer.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>backend.rrrecordsspace.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>road-runner-web.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>roadrunnermusicspace.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>roadrunnerseoinc.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rralbumspromo.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicalbumspromo.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicdatainc.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicdataspace.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicppcspace.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicpromohub.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicrecordsppc.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicspace.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicspacewebplayer.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrmusicwebplayer.top</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrrecordsclub.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrrecordsgroupboost.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrrecordsmusicplayer.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>rrrecordsspace.com</td><td>Road Runner Records</td><td>Music</td></tr>
+<tr><td>76worh4afo.top</td><td>digital-hunch.com</td><td>Marketing</td></tr>
+<tr><td>digital-hunch-ppc.top</td><td>digital-hunch.com</td><td>Marketing</td></tr>
+<tr><td>digital-hunch-seo.top</td><td>digital-hunch.com</td><td>Marketing</td></tr>
+<tr><td>rn2j7kne0z.top</td><td>thinktandem.io</td><td>Marketing</td></tr>
+<tr><td>think-tandem-ppc.top</td><td>thinktandem.io</td><td>Marketing</td></tr>
+<tr><td>think-tandem-seo.top</td><td>thinktandem.io</td><td>Marketing</td></tr>
+<tr><td>269nrl8mvm.top</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>brandnitions.top</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>brandnitionsdata.com</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>brandnitionspcp.com</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>brandnitionsppc.top</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>brandnitionsseo.top</td><td>brandnitions.com</td><td>Marketing</td></tr>
+<tr><td>business-omnitail.top</td><td>omnitail.net</td><td>Marketing</td></tr>
+<tr><td>data-omnitail.top</td><td>omnitail.net</td><td>Marketing</td></tr>
+<tr><td>omnitail.top</td><td>omnitail.net</td><td>Marketing</td></tr>
+<tr><td>omnitailppc.top</td><td>omnitail.net</td><td>Marketing</td></tr>
+<tr><td>omnitailseo.top</td><td>omnitail.net</td><td>Marketing</td></tr>
+<tr><td>1ybppcshop.top</td><td>Zuchetti</td><td>Travel</td></tr>
+<tr><td>1ybseomall.top</td><td>Zuchetti</td><td>Travel</td></tr>
+<tr><td>businesslybra.com</td><td>Zuchetti</td><td>Travel</td></tr>
+<tr><td>lybrapromohub.com</td><td>Zuchetti</td><td>Travel</td></tr>
+<tr><td>zzx26cha6b.com</td><td>Brenton Way</td><td>Marketing</td></tr>
+<tr><td>brenton-way-ppc.com</td><td>Brenton Way</td><td>Marketing</td></tr>
+<tr><td>brenton-way-seo.com</td><td>Brenton Way</td><td>Marketing</td></tr>
+<tr><td>wsx3umkwgb.com</td><td>Brenton Way</td><td>Marketing</td></tr>
+<tr><td>8pvsrpdc53.com</td><td>U production Group</td><td>Marketing</td></tr>
+<tr><td>uproductiongroupboost.com</td><td>U production Group</td><td>Marketing</td></tr>
+<tr><td>uproductionpromomusic.com</td><td>U production Group</td><td>Marketing</td></tr>
+<tr><td>hyperguestseo.top</td><td>HyperGuest</td><td>Travel</td></tr>
+<tr><td>mbuox3iyzx.top</td><td>HyperGuest</td><td>Travel</td></tr>
+<tr><td>hyperguestppc.top</td><td>HyperGuest</td><td>Travel</td></tr>
+<tr><td>nxnbusinessinc.top</td><td>Nexxen</td><td>Marketing</td></tr>
+<tr><td>work.nexxen.net</td><td>Nexxen</td><td>Marketing</td></tr>
+<tr><td>9bcu6lzmvu.top</td><td>Nexxen</td><td>Marketing</td></tr>
+<tr><td>groupboostwish.top</td><td>WISH</td><td></td></tr>
+<tr><td>wishppcinc.top</td><td>WISH</td><td></td></tr>
+<tr><td>w-i-s-h-promohub.top</td><td>WISH</td><td></td></tr>
+<tr><td>wishdatallc.top</td><td>WISH</td><td></td></tr>
+<tr><td>8hqbtycaif.top</td><td>WISH</td><td></td></tr>
+<tr><td>shirudigidata.top</td><td>ShiruDigi</td><td>Marketing</td></tr>
+<tr><td>xrag5tsiov.top</td><td>ShiruDigi</td><td>Marketing</td></tr>
+<tr><td>shirudigiseo.top</td><td>ShiruDigi</td><td>Marketing</td></tr>
+<tr><td>propointppcllc.top</td><td></td><td></td></tr>
+<tr><td>54kciga7qo.top</td><td></td><td></td></tr>
+<tr><td>global.propointseoinc.top</td><td></td><td></td></tr>
+<tr><td>propointseoinc.top</td><td></td><td></td></tr>
+<tr><td>global.propointppcllc.top</td><td></td><td></td></tr>
+<tr><td>sound-cloud-dataseo.top</td><td>SoundCloud</td><td>Music</td></tr>
+<tr><td>sound-cloud-business.top</td><td>SoundCloud</td><td>Music</td></tr>
+<tr><td>datasoundcloud.top</td><td>SoundCloud</td><td>Music</td></tr>
+<tr><td>backend.datasoundcloud.top</td><td>SoundCloud</td><td>Music</td></tr>
+</table>
+<h2>Technical infrastructure</h2>
+<p>The infrastructure of the scam network is designed using outdated technologies and methodologies. It is evident that the individual responsible for their technology has extensive experience in software development. However, their approach suggests a lack of exposure to the significant technological advancements of the past 15 years. This outdated perspective has also resulted in a complete disregard for operational security (OpSec) best practices, leaving the entire network highly vulnerable to exposure.</p>
+<p>The software is developed in Java; however, database statements are concatenated rather than prepared, a practice that was common in the early 2000s but is now considered outdated and insecure. While some passwords are hashed using bcrypt - an algorithm introduced in the late 1990s - others are stored without any encryption or hashing.</p>
+<p>Additionally, critical credentials, including Alibaba Cloud access keys and Telegram administrative secrets, are not encrypted. Some of these sensitive details are even exposed in the user interface, further compromising security and potentially revealing the identities of those involved in the operation.</p>
+<p>The hosting infrastructure is configured in a manner that suggests a lack of technical expertise rather than a deliberate strategy. By adopting modern DevOps practices, the operation could reduce costs by tens of thousands of dollars per month while significantly improving security and performance. The reliance on outdated hosting methods, rarely seen in contemporary systems, results in both excessive expenses and increased vulnerabilities.</p>
+<p>This combination of inefficiency and poor security measures suggests that those behind the operation are not highly skilled technologists but rather individuals adhering to outdated methodologies.</p>
+<h2>Wider Context</h2>
+<p>In recent months, an increasing number of media outlets have reported on the emergence of Chinese "Scam Factories" that engage in the kidnapping of individuals, holding them captive, and coercing them into perpetrating scams against Western targets. Victims who fail to meet the quotas imposed by their captors face severe punishment and humiliation. Investigative pieces from prominent or ganizations such as the BBC, New York Times, CNN have highlighted these operations, featuring interviews with victims and shedding light on the brutal and inhumane conditions within these facilities.</p>
+<p>While we cannot definitively link the operation discussed in this report to the " KK Park " compound in Myanmar - allegedly run by Chinese criminals targeting Westerners through tactics such as "recharge scams" - there are notable similarities between the two, including a direct connection between the Chinese operators and agents in Myanmar.</p>
+<p>This report aims to be the first to provide a detailed examination of the technological infrastructure utilized against the victims of these scams, rather than focusing solely on the human trafficking aspect of those forced to execute the scams. By uncovering the underlying infrastructure, we hope to assist future researchers in identifying and exposing similar operations.</p>
+<h2>Who we are</h2>
+<p>Noam Rotem and Ran Locar are members of CyberCyber Labs, a loosely organized group of security researchers who scan the web to find and report data leaks before they can be exploited. Some of our past discoveries include the personal data of everyone in Ecuador, Biostar2 biometric system, the US domestic drone platform and many others.</p>
+    </article>
+<div class="tildes" id="tildes" aria-hidden="true"></div>
+</div>
+<footer class="vim-foot">
+    <div class="statusline">
+        <span class="status-file"></span>
+        <span class="status-actions"><span class="status-lines"></span><a class="pdf-link" href="Salted_Leeches.pdf" download>pdf</a><a href="../index.html">:q close</a></span>
+    </div>
+    <form class="cmdline" id="cmdline">
+        <label for="cmd">:</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" aria-label="Vim command. Type q and press Enter to close and return home.">
+        <span class="cmdmsg" id="cmdmsg"></span>
+    </form>
+</footer>
+</div>
+<script src="../report.js"></script>
+</body>
+</html>

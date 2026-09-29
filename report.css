@@ -1,0 +1,234 @@
+:root {
+    --bg: #1a1a1a;
+    --fg: #c6c6c6;
+    --ln: #585858;
+    --tilde: #5f87d7;
+    --status-bg: #bcbcbc;
+    --status-fg: #1a1a1a;
+    --heading: #ffd75f;
+    --h2: #87d7ff;
+    --muted: #87afaf;
+    --link: #5fafff;
+    --code: #afd75f;
+    --rule: #3a3a3a;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg);
+    color: var(--fg);
+}
+
+body {
+    font-family: "Courier New", Courier, ui-monospace, monospace;
+    font-size: 15px;
+    line-height: 1.45;
+}
+
+.vim {
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.buf {
+    flex: 1;
+    padding-bottom: 4.2rem;
+}
+
+article {
+    counter-reset: ln;
+    margin: 0;
+    padding: 0.35rem 1.25rem 0 0;
+    max-width: none;
+}
+
+article > * {
+    position: relative;
+    margin: 0;
+    padding: 0.15rem 0 0.15rem 4.4rem;
+}
+
+article > *::before {
+    counter-increment: ln;
+    content: counter(ln);
+    position: absolute;
+    left: 0;
+    top: 0.15rem;
+    width: 3.4rem;
+    text-align: right;
+    color: var(--ln);
+}
+
+h1, h2, h3 {
+    font-family: inherit;
+    font-size: 1em;
+    font-weight: 700;
+    line-height: 1.45;
+    color: var(--heading);
+}
+
+h1 { color: #ffffff; }
+h2 { color: var(--h2); margin-top: 0.6rem; }
+h3 { color: var(--heading); }
+
+.deck { color: var(--fg); font-size: 1em; }
+
+.byline, .kicker { color: var(--muted); margin: 0; }
+
+.meta {
+    display: grid;
+    grid-template-columns: minmax(8rem, 16rem) 1fr;
+    gap: 0 1.5rem;
+    color: var(--muted);
+}
+
+a { color: var(--link); }
+
+p { margin: 0; }
+
+code {
+    font-family: inherit;
+    color: var(--code);
+    background: transparent;
+    padding: 0;
+}
+
+pre {
+    margin: 0;
+    overflow-x: auto;
+    background: transparent;
+    border: 0;
+    padding: 0.15rem 0 0.15rem 4.4rem;
+    line-height: 1.45;
+}
+
+pre::before { top: 0.15rem; }
+
+pre code {
+    color: var(--fg);
+    background: transparent;
+}
+
+article > ul,
+article > ol {
+    margin: 0;
+    padding: 0.15rem 0 0.15rem 6rem;
+}
+
+li { margin: 0.1rem 0; }
+li::marker { color: var(--muted); }
+
+article > table {
+    width: calc(100% - 4.4rem);
+    margin-left: 4.4rem;
+    padding: 0.15rem 0;
+    border-collapse: collapse;
+    font-size: 1em;
+}
+
+article > table::before {
+    left: -4.4rem;
+    top: 0.15rem;
+}
+
+th, td {
+    border-bottom: 1px solid var(--rule);
+    text-align: left;
+    vertical-align: top;
+    padding: 0.2rem 0.8rem 0.2rem 0;
+}
+
+th { color: var(--heading); font-weight: 700; }
+
+figure { margin: 0.4rem 0; }
+
+img {
+    max-width: calc(100% - 1rem);
+    height: auto;
+    border: 1px solid var(--rule);
+    background: #111;
+}
+
+.tildes { margin: 0; }
+
+.tildes span {
+    display: block;
+    width: 3.4rem;
+    text-align: right;
+    color: var(--tilde);
+    line-height: 1.45;
+}
+
+.vim-foot {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: var(--bg);
+    z-index: 2;
+}
+
+.statusline {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: center;
+    background: var(--status-bg);
+    color: var(--status-fg);
+    font-weight: 700;
+    padding: 0 0.6rem;
+    min-height: 1.45em;
+}
+
+.statusline a {
+    color: var(--status-fg);
+    text-decoration: none;
+    font-weight: 700;
+}
+
+.statusline a:hover { text-decoration: underline; }
+
+.status-actions { display: flex; gap: 1.2rem; white-space: nowrap; }
+
+.cmdline {
+    display: flex;
+    align-items: center;
+    gap: 0.15rem;
+    min-height: 1.6em;
+    padding: 0 0.35rem 0.15rem;
+}
+
+.cmdline label { color: var(--fg); }
+
+.cmdline input {
+    flex: 1;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--fg);
+    font: inherit;
+    caret-color: var(--fg);
+    padding: 0;
+}
+
+.cmdmsg { color: #ff8787; white-space: nowrap; }
+
+@media (max-width: 640px) {
+    body { font-size: 14px; }
+    article > *, pre { padding-left: 2.8rem; }
+    article > *::before, pre::before { width: 2.1rem; }
+    article > ul, article > ol { padding-left: 4rem; }
+    article > table {
+        width: calc(100% - 2.8rem);
+        margin-left: 2.8rem;
+        padding: 0.15rem 0;
+    }
+    article > table::before { left: -2.8rem; width: 2.1rem; }
+    .tildes span { width: 2.1rem; }
+    .meta { grid-template-columns: 1fr; }
+    .status-file { overflow: hidden; text-overflow: ellipsis; }
+}

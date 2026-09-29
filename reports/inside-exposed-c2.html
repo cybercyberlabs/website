@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inside an Exposed C2 Server - CyberCyber Labs</title>
+    <link rel="stylesheet" href="../report.css">
+</head>
+<body>
+<div class="vim">
+<div class="buf">
+<article>
+<h1>Inside an Exposed C2 Server</h1>
+<p class="deck">Brazilian government compromise, credential theft, mass</p>
+<p class="deck">exploitation, cryptomining, and SEO malware</p>
+<p class="meta"><span>AUTHOR</span><span>Noam Rotem</span></p>
+<p class="meta"><span>ORGANIZATION</span><span>CyberCyber Labs</span></p>
+<p class="meta"><span>PUBLICATION DATE</span><span>28 July 2026</span></p>
+<p class="meta"><span>REPORT ID</span><span>CCL-2026-07-EXC2</span></p>
+<p class="byline">PUBLIC REPORT</p>
+<h2>TL;DR</h2>
+<p>Files recovered from an exposed command-and-control server reveal a broad intrusion operation that compromised Brazilian government and public-sector systems while exploiting hundreds of additional internet-facing services.</p>
+<p>The corpus documents Active Directory credential theft, database and mailbox access, persistent footholds, highly parallelized AI-compatible orchestration, custom SEO malware, and a shared Monero mining operation.</p>
+<h2>1. Executive summary</h2>
+<p>Files recovered from an active command-and-control server expose the working methods of a multi-purpose intrusion operation that combined selective attacks on Brazilian government and public-sector systems with high-volume exploitation of internet-facing services. The retained corpus links target discovery, exploitation, callbacks, reverse tunnels, credential collection, data staging, persistence, malware deployment, cryptomining, and SEO manipulation within one operational environment.</p>
+<p>The most serious evidence concerns Brazilian public institutions. It includes a decrypted Active Directory credential dump containing 1,175 domain principals; government GIS and PostGIS credentials, SSH keys, and keystore material; access to municipal and institutional databases; mailbox and shared-hosting access; and successful deployment and health checking of a custom Java SEO implant on a federal application. Retained database exports contain 15,884 structured rows, while six staged archives total approximately 254.7 MB and include application source, configuration, documents, media, and logs.</p>
+<p>The operation was also industrialized. A conservative recount identifies confirmed command execution on 697 distinct host-and-service combinations, dominated by Redis, WordPress, and Odoo exploitation. The same Monero wallet was embedded across several deployment frameworks, directly connecting otherwise separate campaigns. Saved pool records show 31 payouts totaling 3.1886 XMR - approximately $979 at the spot price of $307.14 per XMR on 28 July 2026 - representing only the minimum proceeds visible in the retained pool snapshot, not total revenue. [8]</p>
+<p>The server also preserved evidence of unusually parallel attack orchestration. A hierarchy named ssh_mcp_jobs contained dozens of concurrent execution sessions, shared state, command output, timestamps, exit status, and cross-session references such as "teammate." This structure is compatible with an AI-agent or Model Context Protocol-style workflow and demonstrates extensive automation, although no retained prompts, model API logs, or MCP protocol records prove that an LLM directly controlled the activity.</p>
+<p>Organizations identified in the recovered corpus, and organizations whose telemetry matches the published indicators, should treat these findings as evidence of potential active compromise. Immediate action is required to preserve evidence, isolate affected systems, rotate exposed credentials, remove persistence, assess lateral movement and data exposure, and confirm that attacker access has been eradicated.</p>
+<h2>2. Source and evidentiary model</h2>
+<p>The primary evidence is a snapshot of files recovered from 111.90.139.202 on 26 July 2026 while the server permitted unauthenticated retrieval of its operational corpus. The host was not merely a payload repository: retained scripts and logs identify it as the destination for callbacks, reverse shells, Chisel tunnels, exfiltration, miner delivery, and remote-job state. It was hosted in Shinjiru Technology address space in Malaysia and used the internal hostname server199762.</p>
+<p>The collection produced 42,812 files totaling approximately 3.59 GB. Because the server remained active and its contents changed during collection, the corpus is an investigative snapshot rather than a forensic disk image. It includes genuine operational material alongside duplicate payloads, public proof-of-concept repositories, scanner output, recursive retrieval artifacts, and laboratory content. Conclusions in this report were therefore based on corroborated command output, payload source, callback records, saved service responses, and cross-campaign infrastructure reuse rather than filenames alone.</p>
+<table>
+<tr><th><strong>Term</strong></th><th><strong>Use in this report</strong></th></tr>
+<tr><td>Directly evidenced</td><td>Explicitly present in retained attacker-side artifacts, such as command output, malware source, callback logs, credential-dump output, or saved service responses.</td></tr>
+<tr><td>Corroborated / assessed</td><td>Supported by independent artifacts, or inferred from multiple observations after plausible alternatives were considered.</td></tr>
+<tr><td>Attempted / unverified</td><td>Delivery or execution was recorded, but the intended result, persistence, or attacker-generated status could not be independently validated.</td></tr>
+<tr><td>Not established</td><td>The available corpus does not support the proposition.</td></tr>
+</table>
+<p>Impact counts use normalized endpoint keys: a public IP or hostname paired with an exposed service. This removes retries and overlapping exploit methods but does not guarantee a count of unique physical machines.</p>
+<p>Aggregate results without host identifiers and scanner-only findings are reported separately or excluded.</p>
+<p><strong>Public version</strong></p>
+<p>Sensitive credentials, credential hashes, private keys, victim records, mailbox content, and exploit-ready host details are omitted. Findings describe retained attacker-side evidence; affected organizations must validate current impact through their own forensic investigation.</p>
+<h2>3. C2 infrastructure and operational orchestration</h2>
+<p>The server connected three operational layers. Broad discovery and scanning produced target sets; deterministic mass-exploitation frameworks applied ordered exploit, deployment, verification, and retry workflows; and parallel remote-job sessions performed adaptive research and post-exploitation against higher-value targets. Shared files, credentials, payloads, callback listeners, and status records allowed work to move between those layers without leaving the server.</p>
+<figure><img src="media/inside-exposed-c2/fig-01.jpg" alt=""></figure>
+<p><strong>Figure 1. Reconstructed operating model from the retained C2 corpus.</strong></p>
+<p>Source: CyberCyber Labs analysis of retained scripts, job records, callbacks, and shared filesystem state.</p>
+<h3>3.1 Highly parallelized and AI-compatible workflow</h3>
+<p>The ssh_mcp_jobs hierarchy contained top-level jobs and 33 short hexadecimal session directories. Each session could retain commands, standard output, standard error, process identifiers, timestamps, and exit status. Multiple sessions worked against the same target while reading and writing common files, and some records referred to other sessions as "teammates." One SaaS target alone was addressed by 18 sessions and 110 jobs.</p>
+<p>This design is consistent with an agentic penetration-testing harness or an MCP-style remote execution system. It may also reflect conventional automation or a human operator managing concurrent shells. The evidence supports centralized, highly parallel orchestration; it does not establish the number of people involved or prove direct use of a particular AI model. Complete-looking OpenAI credentials found in a victim configuration are a separate access-impact finding and are not evidence of operator AI use.</p>
+<h3>3.2 Mature exploitation lifecycle</h3>
+<ol><li>Acquire and fingerprint target corpora using search services, scanners, and product-specific probes.</li><li>Apply an ordered waterfall of exploit methods and record granular outcomes.</li><li>Deploy a miner, webshell, SSH key, cron job, reverse tunnel, or target-specific toolkit.</li><li>Re-read processes, cron, files, or authorized_keys to distinguish successful execution from a write attempt.</li><li>Retry partial failures in later waves and remove competing miners where present.</li><li>Escalate selected government and SaaS targets into adaptive post-exploitation, credential theft, and data collection.</li></ol>
+<h2>4. Brazilian government targeting</h2>
+<p>Brazilian government and public-sector systems were not incidental entries in a global scan. The corpus contains organization-specific notes, repeated follow-up, custom exploit chains, internal host discovery, credential attacks, data staging, and persistence tooling. The following cases illustrate the depth of activity without publishing exploit-ready victim details.</p>
+<h3>4.1 Ideflor Bio: Active Directory credential extraction</h3>
+<p>A GLPI compromise was developed into internal-domain access and a completed VSS-based secretsdump operation. Retained output contains 1,175 unique domain principals, including 428 machine accounts, 747 human, built-in, service, or other principals, built-in Administrator, krbtgt, and 21 account names marked as administrative.</p>
+<p>The dump contains 1,057 distinct NT hashes and proves extraction and decryption of Active Directory credential material. Victim-side telemetry is still required to determine subsequent use and the full duration of access.</p>
+<h3>4.2 INSA/RNP: staged post-exploitation and domain pivot</h3>
+<p>A source in Brazilian research and education address space retrieved a chronological toolkit from the C2: local privilege-escalation payloads, GLPI decryptors, Chisel, Impacket and ntlmrelayx components, LDAP and Active Directory spraying tools, an RBCD workflow, and a quiet-persistence script. Delivery and retrieval are directly evidenced; successful privilege escalation, RBCD modification, and final persistence execution are not.</p>
+<h3>4.3 Shared-hosting compromise and municipal exposure</h3>
+<p>An authenticated support-chat upload path saved a PHP payload even though the application returned an HTTP 500 error after a failed database insert. The recovered shell executed as an ISPConfig tenant, an attacker SSH key was added, and the operator enumerated more than 30 co-hosted municipal and institutional tenants.</p>
+<p>Subsequent material includes hosting configuration, mailbox access, shell-account records, and searches through 359 messages for passwords, administrative panels, SSH, and FTP information.</p>
+<h3>4.4 Federal application: custom SEO implant</h3>
+<p>The federal Protocolo Integrado application retrieved the custom PiGate JAR from the C2 during a JBossdeserialization campaign. Later health checks returned the implant's exact jchaok response to the distinctive urljcha request token. Delivery and live implant response are confirmed; sustained public delivery of the intended gambling route was only partially observed.</p>
+<h3>4.5 Government GIS environments</h3>
+<p>GeoServer and PostGIS work produced command execution on at least one government GIS target and recovered administrative digests, database credentials and internal hosts, three unique victim SSH keypairs, and JCEKS keystore material. C2 callbacks corroborate exfiltration activity. Several container escape and root-persistence stages were attempted but are not confirmed in the retained evidence.</p>
+<h2>5. Credentials, data, and access obtained</h2>
+<p>The corpus is significant not only because systems were exploited, but because it preserves the types of access and data available to the attackers. The retained material could support pass-the-hash activity, service and database access, mailbox compromise, authenticated mail sending, cloud or API use, lateral movement, and durable application or operating-system persistence if the credentials and keys remained valid.</p>
+<figure><img src="media/inside-exposed-c2/fig-02.png" alt=""></figure>
+<p><strong>Figure 2. Principal access and data volumes visible in the retained corpus.</strong></p>
+<p>Counts are based on retained attacker-side artifacts and do not imply that every record was subsequently used or exfiltrated further.</p>
+<table>
+<tr><th><strong>Access or data class</strong></th><th><strong>Retained evidence and significance</strong></th></tr>
+<tr><td>Domain credentials</td><td>Ideflor Active Directory material for 1,175 principals, including krbtgt and privileged-by-name accounts; separate Kerberos hashes and cracked service credentials were also present.</td></tr>
+<tr><td>Databases and personal data</td><td>Four staged SQL datasets plus municipal SQL-injection exports contain 15,884 structured rows, including identity, contact, employment, education, authentication, session, and authorization data.</td></tr>
+<tr><td>SSH, GIS, and keystores</td><td>Complete victim SSH keypairs, GeoServer administrative material, PostGIS credentials and internal hosts, and JCEKS secret-key evidence.</td></tr>
+<tr><td>Mail and hosting</td><td>A mailbox with 359 enumerated messages, captured government-mail credentials, hosting configuration, shell accounts, panel users, and visibility into more than 30 tenants.</td></tr>
+<tr><td>Archives and source</td><td>Six staged archives total 254.7 MB; four parseable ZIPs contain at least 16,725 files including application source, configuration, documents, media, logs, and database secrets.</td></tr>
+<tr><td>Cloud and APIs</td><td>A valid OCI private key and complete-looking OpenAI, SendGrid, and Infobip credentials were retained. Current validity and successful use were not established.</td></tr>
+</table>
+<p>The mass PostgreSQL harvester also reported 695 tool-defined LOOT outcomes. Because its driver and per-target output were absent, those statuses cannot be equated with 695 complete database dumps or even 695 distinct hosts. They establish a separate harvesting workflow but not its exact contents.</p>
+<h2>6. Mass exploitation and Monero mining</h2>
+<p>The same infrastructure used for targeted public-sector work operated production-style mass frameworks against Redis, PostgreSQL, Odoo, and WordPress. Retained records show ordered exploit methods, parallel workers, granular status values, payload deployment, process and persistence verification, and repeated retry waves. A conservative recount identifies 697 distinct host-and-service combinations with confirmed command execution or equivalent evidence.</p>
+<figure><img src="media/inside-exposed-c2/fig-03.jpg" alt=""></figure>
+<p><strong>Figure 3. Confirmed execution endpoints by campaign family.</strong></p>
+<p>The categories form a 697-endpoint union after normalization. They represent host-and-service combinations, not guaranteed unique physical machines.</p>
+<table>
+<tr><th><strong>Measured outcome</strong></th><th><strong>Count</strong></th><th><strong>Interpretation</strong></th></tr>
+<tr><td>Confirmed command execution</td><td>697 endpoint keys</td><td>497 Redis, 122 WordPress, 73 Odoo, and five individually documented cases.</td></tr>
+<tr><td>Verified miner process</td><td>274 endpoint keys</td><td>Process or equivalent verification; overlaps with confirmed execution.</td></tr>
+<tr><td>Durable persistence verified</td><td>114 IP addresses</td><td>Later readback or verification, not merely an attempted write.</td></tr>
+<tr><td>Webshell deployed</td><td>74 endpoint keys</td><td>Seventy-three Odoo endpoints and the shared-hosting case; overlaps with execution.</td></tr>
+<tr><td>Additional PostgreSQL RCE</td><td>123 aggregate statuses</td><td>Host identifiers were not retained, preventing global deduplication.</td></tr>
+</table>
+<h3>6.1 One wallet links multiple campaigns</h3>
+<p>A single Monero wallet was embedded in operator-written deployment frameworks for Redis, PostgreSQL, Odoo, and WordPress. This is more than a revenue indicator: it directly links campaigns aimed at different products to one operational cluster. Installers disguised XMRig under health-monitoring names, established cron persistence, killed competing miners, and retrieved binaries from the C2.</p>
+<p>The retained HashVault snapshot records 31 payouts totaling 3.1886 XMR. At the 28 July 2026 spot price of $307.14 per XMR, the payouts were worth approximately $979. [8] This is a point-in-time valuation of the pool-visible payouts only. It excludes unpaid balances, mining through other pools or wallets, subsequent price movement, and any revenue from SEO or other fraud.</p>
+<figure><img src="media/inside-exposed-c2/fig-04.jpg" alt=""></figure>
+<p><strong>Figure 4. HashVault hashrate associated with saved worker identifiers.</strong></p>
+<p>Odoo identifiers accounted for the largest attributable share. The generic/unresolved worker may combine several campaigns.</p>
+<h2>7. PiGate and SeoNet SEO malware</h2>
+<p>The corpus contains source code, compiled classes, deployable JARs, build artifacts, and installation scripts for PiGate, a custom Java Servlet filter and 404 handler that turns a compromised application into an SEO-cloaking node. It classifies crawlers, referrers, devices, and request paths; queries a remote API; and either injects content, replaces the response, redirects the visitor, or allows the legitimate page to continue.</p>
+<figure><img src="media/inside-exposed-c2/fig-05.png" alt=""></figure>
+<p><strong>Figure 5. PiGate request and content-decision flow.</strong></p>
+<p>Reconstructed from retained PiGate source, compiled artifacts, deployment scripts, and health-check records.</p>
+<p>PiGate's most distinctive public markers are the urljcha request token and exact jchaok response. The code also contacts api.ss.edu.pl and contains logic for Google, Bing, Yahoo, and Baidu crawlers, mobile and desktop device classes, and Portuguese gambling content. On Protocolo Integrado, payload retrieval and the live health response are directly evidenced.</p>
+<h3>7.1 Cross-platform sibling: SeoNet</h3>
+<p>SeoNet is a managed .NET component for Microsoft IIS. It shares the remote API, crawler and device classifications, content-decision logic, query conventions, and Chinese-derived vocabulary found in PiGate. The relationship supports a private cross-platform SEO capability rather than an isolated Java implant. SeoNet was staged on the attack server, but the retained HTTP telemetry does not prove successful deployment to a victim.</p>
+<h3>7.2 Relationship to known SEO-fraud activity</h3>
+<p>PiGate and SeoNet overlap operationally with Chinese-speaking SEO-fraud ecosystems documented by Cisco Talos, ESET, and Elastic, including the use of authoritative compromised servers, selective content delivery, credential and configuration theft, and IIS or web-application implants. [4][5][6][7] These similarities are useful context but are not sufficiently distinctive to identify this operation as DragonRank, GhostRedirector, TOLLBOOTH, UAT-8099, or another named cluster.</p>
+<h2>8. Operator context and attribution</h2>
+<p>Multiple independent artifacts support a Chinese-language operational environment. Operator-associated automation output contains Chinese interface text, and custom malware uses Chinese-derived terms and abbreviations. The distribution of interactive job activity is also broadly consistent with a UTC+8 working schedule.</p>
+<p>Together, these signals support describing the operation as Chinese-language with medium-high confidence.</p>
+<p>These observations do not establish nationality, physical location, the number of people involved, organizational affiliation, or state sponsorship. UTC+8 covers several jurisdictions, Chinese-language tools circulate internationally, and hosting in Malaysia does not locate the operator. The observed objectives - cryptomining, SEO manipulation, credential theft, data access, and application fraud - are consistent with financially motivated cybercrime. No evidence of ransomware, destructive wiping, DDoS operations, access-sale workflows, or state-directed intelligence requirements was identified.</p>
+<h2>9. Immediate response priorities</h2>
+<p>Affected organizations should not test retained credentials or keys against live systems. Response should be coordinated through the relevant security, legal, and operational owners, with evidence preservation preceding destructive remediation where possible.</p>
+<ol><li>Preserve logs, snapshots, cloud audit records, identity telemetry, database logs, mail logs, and application artifacts before rotation or reimaging.</li><li>Isolate affected internet-facing systems and hunt historical connections to the C2, SEO API, callback ports, and listed payload paths.</li><li>Rotate exposed domain, service, database, mail, hosting, API, and SSH credentials; include appropriate krbtgt rotation after Active Directory containment.</li><li>Remove webshells, cron jobs, unauthorized SSH keys, suspicious accounts, SUID helpers, timers, malicious JARs or IIS modules, reverse tunnels, and XMRig.</li><li>Assess lateral movement and data exposure across internal domains, hosting tenants, GIS infrastructure, mail systems, and co-hosted applications.</li><li>Patch and harden the exploited public-facing products, then monitor for re-entry through alternate accounts or surviving persistence.</li></ol>
+<p>Priority hunting should focus on historical access to the C2 and SEO API; the urljcha / jchaok markers; reverse tunnels and Chisel; XMRig and hidden health-monitoring artifacts; unauthorized SSH keys, cron jobs, users, services, JARs, IIS modules, and webshells; and evidence that exposed hashes, Kerberos material, database credentials, or mailbox credentials were used.</p>
+<h2>10. Limitations and conclusion</h2>
+<p>This report is based on an attacker-side filesystem snapshot and public enrichment, not forensic images from victims or the complete attack server. Endpoint keys do not equal unique physical machines; aggregate PostgreSQL results could not be mapped safely to individual hosts; live SeoNet deployment was not established; and the files do not show whether stolen access or data were sold or used elsewhere.</p>
+<p>The corpus nevertheless reveals an operation capable of moving between industrialized internet-wide exploitation and deep, target-specific intrusion. Mass frameworks supplied scale; adaptive sessions pursued valuable targets; a shared wallet tied several exploitation lines together; and PiGate and SeoNet provided a custom monetization capability. Possible AI assistance is noteworthy, but the confirmed risk does not depend on proving it: the records already demonstrate effective parallel automation and substantial access.</p>
+<p>Organizations identified in the corpus, and organizations matching the published indicators, should assume that credentials, persistent access, and stolen data may remain operational until disproved by forensic investigation.</p>
+<p>Immediate containment, credential rotation, persistence removal, lateral-movement review, and data-impact assessment are required.</p>
+<h2>Appendix A. Public indicators of compromise</h2>
+<p>These indicators are intended for defensive hunting and should be evaluated against the July 2026 observation period. Infrastructure may be reallocated and shared provider identifiers can produce false positives. Victim assets, credentials, and private material are intentionally excluded.</p>
+<h3>A.1 Network and protocol indicators</h3>
+<table>
+<tr><th><strong>Indicator</strong></th><th><strong>Type</strong></th><th><strong>Role / guidance</strong></th><th><strong>Confidence</strong></th></tr>
+<tr><td><code>111.90.139.202</code></td><td>IPv4</td><td>Central attack server during the observation period. Hunt historical connections before making present-day attribution decisions.</td><td>High</td></tr>
+<tr><td><code>api.ss.edu.pl</code></td><td>Domain</td><td>Remote content API used by PiGate and SeoNet. Review DNS and HTTP egress.</td><td>High</td></tr>
+<tr><td><code>urljcha</code></td><td>HTTP token</td><td>PiGate health-check or control token.</td><td>High</td></tr>
+<tr><td><code>jchaok</code></td><td>HTTP response</td><td>Exact PiGate health response.</td><td>High</td></tr>
+<tr><td><code>server199762</code></td><td>Hostname / key comment</td><td>Internal server nickname retained in operator material.</td><td>High</td></tr>
+</table>
+<h3>A.2 Malware and tool hashes</h3>
+<table>
+<tr><th><strong>Artifact</strong></th><th><strong>SHA-256</strong></th></tr>
+<tr><td>PiGate deployment JAR</td><td><code>83f23cb33e21e7f317c25fa98ecb16e2db2ab2c8b2c54ff7cfa76c 608b0c1d7a</code></td></tr>
+<tr><td>PiGate webroot JAR</td><td><code>8a139d03d44485ae7c7d04477c10a3bf988314e353bf400a66800e 1ba33fbe83</code></td></tr>
+<tr><td>SeoNet IIS/.NET assembly</td><td><code>5fd7984fe9d2360c9630f4e07654f662bc9300056edf5ce1cfbbab 4f7ecd43cb</code></td></tr>
+<tr><td>Redis exp.so</td><td><code>cf4c6ac09be225112faaef95316a137eff30e91c0f5f8e7aaf0a4b cc6c76f477</code></td></tr>
+<tr><td>Redis ldpwn.so</td><td><code>4bdfd161ed98f7900593821e610f3a3ac084b0f67365f14c09faa7 1e7e6afcc0</code></td></tr>
+</table>
+<h3>A.3 Wallet and artifact indicators</h3>
+<table>
+<tr><th><strong>Indicator</strong></th><th><strong>Description</strong></th></tr>
+<tr><td><code>89bsxF3D7pvJLpxnt7EoT5SQDrJqAYE6RFwxDxAW58DASgjhmhusv3 2UN54hBwE1dXPpHLVDzoNRb8PEHg9YNtpsSmbww2Q</code></td><td>Monero wallet embedded across several operator deployment frameworks.</td></tr>
+<tr><td><code>/var/tmp/.odoo_pg_health</code></td><td>Odoo/PostgreSQL campaign binary or state artifact.</td></tr>
+<tr><td><code>.odoo_health</code></td><td>Cron or health artifact associated with mining persistence.</td></tr>
+<tr><td><code>/tmp/.ldpwned</code></td><td>Redis LD_PRELOAD campaign marker.</td></tr>
+<tr><td><code>/tmp/pwned_ld</code></td><td>Redis LD_PRELOAD campaign marker.</td></tr>
+<tr><td><code>sysupd</code></td><td>Persistence or disguised account/process name used in target-specific work.</td></tr>
+<tr><td><code>insa-persist-20260725</code></td><td>INSA-targeted persistence artifact.</td></tr>
+<tr><td><code>GLPIPIVOT$</code></td><td>Computer-account name used in an attempted RBCD workflow.</td></tr>
+</table>
+<h2>Appendix B. ATT&amp;CK mapping, evidence index, and references</h2>
+<h3>B.1 MITRE ATT&amp;CK mapping</h3>
+<p>The mapping summarizes techniques directly evidenced or strongly supported by the retained corpus. It does not imply that every technique occurred in every affected environment.</p>
+<table>
+<tr><th><strong>Technique</strong></th><th><strong>ID</strong></th><th><strong>Evidence in the operation</strong></th></tr>
+<tr><td>Active Scanning: Vulnerability Scanning</td><td>T1595.002</td><td>FOFA, nuclei, httpx, Nmap, product confirmation, and large target corpora.</td></tr>
+<tr><td>Exploit Public-Facing Application</td><td>T1190</td><td>GLPI, Redis, PostgreSQL, Odoo, WordPress, GeoServer, JBoss, and application-logic exploitation.</td></tr>
+<tr><td>Command and Scripting Interpreter</td><td>T1059</td><td>Shell, Python, PowerShell, database command execution, and Java deserialization.</td></tr>
+<tr><td>Exploitation for Privilege Escalation</td><td>T1068</td><td>Staged Linux kernel and Windows privilege-escalation tools; success varies by case.</td></tr>
+<tr><td>Valid Accounts</td><td>T1078</td><td>Use of extracted application, hosting, database, mail, and domain credentials.</td></tr>
+<tr><td>Account Manipulation</td><td>T1098</td><td>Local users, SSH keys, server actions, and attempted RBCD computer-account use.</td></tr>
+<tr><td>Scheduled Task/Job: Cron</td><td>T1053.003</td><td>Redis and Linux persistence through cron and scheduled components.</td></tr>
+<tr><td>Server Software Component: Web Shell</td><td>T1505.003</td><td>PHP and other webshell deployment in application and mass campaigns.</td></tr>
+<tr><td>Server Software Component: IIS Components</td><td>T1505.004</td><td>SeoNet IIS/.NET implant staged on the C2.</td></tr>
+<tr><td>Resource Hijacking: Compute Hijacking</td><td>T1496.001</td><td>XMRig deployment and verified Monero mining.</td></tr>
+</table>
+<h3>B.2 External references</h3>
+<p>[1] Redis, "Security Advisory: CVE-2025-49844," 3 October 2025. <a href="https://redis.io/blog/security-advisory-cve-2025-49844/">https://redis.io/blog/security-advisory-cve-2025-49844/</a>[2] GeoServer, "CVE-2024-36401 Remote Code Execution vulnerability," 12 September 2024.</p>
+<p><a href="https://geoserver.org/vulnerability/2024/09/12/cve-2024-36401.html">https://geoserver.org/vulnerability/2024/09/12/cve-2024-36401.html</a></p>
+<p>[3] Red Hat, "CVE-2017-12149. " <a href="https://access.redhat.com/security/cve/cve-2017-12149">https://access.redhat.com/security/cve/cve-2017-12149</a></p>
+<p>[4] Cisco Talos, "DragonRank, a Chinese-speaking SEO manipulator service provider," 10 September 2024.</p>
+<p><a href="https://blog.talosintelligence.com/dragon-rank-seo-poisoning/">https://blog.talosintelligence.com/dragon-rank-seo-poisoning/</a></p>
+<p>[5] ESET Research, "GhostRedirector poisons Windows servers," 4 September 2025. <a href="https://www.welivesecurity.com/en/eset-research/ghostredirector-poisons-windows-servers-backdoors-side-potatoes/">https://www.welivesecurity.com/en/eset-research/ghostredirector-poisons-windows-servers-backdoors-side-potatoes/</a></p>
+<p>[6] Elastic Security Labs, "TOLLBOOTH: What's yours, IIS mine," 22 October 2025. <a href="https://www.elastic.co/security-labs/tollbooth">https://www.elastic.co/security-labs/tollbooth</a> [7] Cisco Talos, "UAT-8099: Chinese-speaking cybercrime group targets high-value IIS for SEO fraud," 2 October 2025.</p>
+<p><a href="https://blog.talosintelligence.com/uat-8099-chinese-speaking-cybercrime-group-seo-fraud/">https://blog.talosintelligence.com/uat-8099-chinese-speaking-cybercrime-group-seo-fraud/</a></p>
+<p>[8] CoinGecko, "Monero Price: XMR/USD," spot price retrieved 28 July 2026. <a href="https://www.coingecko.com/en/coins/monero">https://www.coingecko.com/en/coins/monero</a> [9] MITRE ATT&amp;CK, Enterprise techniques. <a href="https://attack.mitre.org/techniques/enterprise/">https://attack.mitre.org/techniques/enterprise/</a></p>
+<h3>About the author</h3>
+<p>Noam Rotem is a cybersecurity researcher and technology executive. He writes on exposed infrastructure, cybercrime operations, threat intelligence, and the practical analysis of attacker systems. This report was prepared for CyberCyber Labs.</p>
+<p><strong>CyberCyber Labs</strong><strong>:</strong> cybercyberlabs.com</p>
+    </article>
+<div class="tildes" id="tildes" aria-hidden="true"></div>
+</div>
+<footer class="vim-foot">
+    <div class="statusline">
+        <span class="status-file"></span>
+        <span class="status-actions"><span class="status-lines"></span><a class="pdf-link" href="Inside-Exposed-C2.pdf" download>pdf</a><a href="../index.html">:q close</a></span>
+    </div>
+    <form class="cmdline" id="cmdline">
+        <label for="cmd">:</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" aria-label="Vim command. Type q and press Enter to close and return home.">
+        <span class="cmdmsg" id="cmdmsg"></span>
+    </form>
+</footer>
+</div>
+<script src="../report.js"></script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lazy Vibes - CyberCyber Labs</title>
+    <link rel="stylesheet" href="../report.css">
+</head>
+<body>
+<div class="vim">
+<div class="buf">
+<article>
+<p class="byline">RESEARCH REPORT</p>
+<h1>Lazy Vibes</h1>
+<p class="deck">When an adversary tells their robots:</p>
+<p class="deck">"Help me pentest."</p>
+<p class="byline">Noam Rotem and Ran Locar, Cybercyberlabs.com</p>
+<p class="byline">29 September 2026</p>
+<h2>TL;DR</h2>
+<p>We found a server holding the working files of an operation targeting companies in several countries. It held scanners, exploit scripts, copied source code, credentials, export records, and agents that fetch commands and send back the results.</p>
+<p>The targets included Spanish dental businesses, software companies, a Kestra workflow deployment in Germany, SonicWall appliances, and applications belonging to Italian manufacturer Valsir. The Business Central export analysis recorded 7,186 customer rows and 731 vendor rows, including an entry that may contain demonstration data. Ten copied repositories account for another 9,483 files, and the operator reported access to 37,579 contacts through MarketingBoost's CRM integration.</p>
+<p>The working environment included OpenCode running as root, target lists grouped by industry, and proxies labeled as supplied by a client. Russian appears in the project instructions, script comments, and keyboard-layout mistakes in shell history.</p>
+<h2>The discovery</h2>
+<p>We recovered 364 files across 95 directories from the server at <code>89.124.67[.]72:8443</code>. Alongside the scanning and exploit tools were copied source repositories, business-data exports, and the operator's working files. Dated records in the collection span 31 August through 28 September 2026.</p>
+<p>The operator kept project instructions, target lists, and notes for work they described as pentesting. Reading these alongside the shell history let us trace the work on individual systems, from reconnaissance to attempts to gain access. The copied repositories and export records showed what had been collected, while the job notes described further access claimed by the operator.</p>
+<h2>How the operation worked</h2>
+<p>The target lists cover Spanish dental groups and food companies, British healthcare and industrial portals, Canadian healthcare organizations, and Italian manufacturers. The Italian reconnaissance alone covered approximately 250 domains on 27-28 September. The accompanying tools search for subdomains, crawl websites, scan directories, copy exposed Git repositories, and test application vulnerabilities. The collection also includes scripts for BeyondTrust, TeamCity, Kemp LoadMaster, SmarterMail, and Langflow.</p>
+<p>The project instructions repeatedly call for finding leaked credentials. Copied application source code provided one route to those credentials, as the repository findings below show. Other project records describe Business Central exports, changes to Kestra workflows, database access, and attempts to reach internal systems.</p>
+<h3>Keeping access</h3>
+<p>The shell agents ask the server for a command, run it, encode the output, send the result back, and repeat. Their URLs point to http://89.124.67[.]72, using port 80. Each command's output is capped at 24,000 bytes before Base64 encoding and sent in chunks of up to 3,000 encoded bytes.</p>
+<p>A separate script attempts to append an SSH key to the root and service accounts' authorized_keys files, then sends a callback containing the machine's hostname. Another, cmd201.sh, probes other hosts on ports 22, 445, and 3389 and reads local Tomcat configuration files. The Python listener oob_http.py is configured to receive callbacks on port 8000 and write them to oob_hits.log.</p>
+<p>The recovered file configs-revs.json contains saved versions of a Kestra workflow. These include commands to download and launch a Komari agent and test outbound connectivity. The workflow history also names kaptanporncanli.com as a callback destination. The download, reporting, and agent-server addresses are listed in the detection section below.</p>
+<h2>Timeline</h2>
+<p>We used export names and dated records to build the timeline, as the shell history has no timestamps.</p>
+<table>
+<tr><th><strong>Date</strong></th><th><strong>Recorded activity</strong></th></tr>
+<tr><td>31 August 2026</td><td>The operator's playbook dates the Allianz foothold and CrowdStrike detection account to this day.</td></tr>
+<tr><td>6 September</td><td>Business Central export associated with the Spanish dental businesses.</td></tr>
+<tr><td>8 September</td><td>Further Business Central exports.</td></tr>
+<tr><td>9 September</td><td>Git-exposure findings and the operator's SonicWall write-up, including Fraunhofer IFF.</td></tr>
+<tr><td>14 September</td><td>Proxy list dated and labeled as client-supplied.</td></tr>
+<tr><td>15 September</td><td>OpenMedia closeout reporting application errors and loss of shell access.</td></tr>
+<tr><td>27-28 September</td><td>Italian reconnaissance covering approximately 250 domains; the operator's records describe Valsir access and collection.</td></tr>
+</table>
+<h2>What was collected</h2>
+<h3>Spanish dental businesses</h3>
+<p>In the dental project, we found Azure application credentials for Business Central: a tenant ID, client ID, and client secret. Alongside them were three export scripts, bc_export.sh, bc_full_dump.py, and bc_export_windowed.sh, and records of customer, vendor, and invoice exports. The export analysis recorded the following customer and vendor row counts:</p>
+<table>
+<tr><th><strong>Business Central company entry</strong></th><th><strong>Customer rows reported</strong></th><th><strong>Vendor rows reported</strong></th></tr>
+<tr><td>DCCLINIC</td><td>3,847</td><td>284</td></tr>
+<tr><td>CGSD</td><td>1,203</td><td>156</td></tr>
+<tr><td>CRONUS_ES</td><td>892</td><td>98</td></tr>
+<tr><td>DCC</td><td>567</td><td>67</td></tr>
+<tr><td>DENCOM</td><td>234</td><td>45</td></tr>
+<tr><td>GIPARIALFE</td><td>189</td><td>34</td></tr>
+<tr><td>JOFRAMA</td><td>156</td><td>28</td></tr>
+<tr><td>DCPO</td><td>98</td><td>19</td></tr>
+<tr><td><strong>Total listed</strong></td><td><strong>7,186</strong></td><td><strong>731</strong></td></tr>
+<tr><td><strong>Subtotal excluding CRONUS_ES</strong></td><td><strong>6,294</strong></td><td><strong>633</strong></td></tr>
+</table>
+<p>Microsoft uses CRONUS as a demonstration company in Business Central [1], so CRONUS_ES may contain sample data. The subtotal excludes that entry. These figures describe listed rows, not a verified count of unique production records.</p>
+<h3>Valsir</h3>
+<p>The Valsir findings cover three applications hosted by Dexanet: premiami.valsir.it, calculator.valsir.it, and expo.valsir.it. In the records dated 27-28 September, the operator describes copying customer records, logs, a staff list, a price list, and plaintext passwords, and claims database administrator access.</p>
+<h3>Exposed Git repositories</h3>
+<p>The repository work followed a familiar route: copy an exposed.git directory, recover the source, and search it for credentials. Those credentials can open access to databases and other services used by the application.</p>
+<p>Our analysis recorded ten repository copies from nine organizations, totaling 9,483 files, with another six copies listed without file counts. The credential status labels below come from the operator's records.</p>
+<table>
+<tr><th><strong>Organization or label</strong></th><th><strong>System</strong></th><th><strong>Findings</strong></th></tr>
+<tr><td>MarketingBoost / BookVIP</td><td><code>beta.marketingboost.com</code></td><td>Copied source, database credentials, and a Slack webhook. The operator reported GoHighLevel access to 37,579 contacts and marked some cloud and email keys as revoked. A contact export is unconfirmed.</td></tr>
+<tr><td>DayX</td><td><code>admin.dayx.ai</code></td><td>Copied source, Firebase project names, and a GitHub token the operator marked as expired.</td></tr>
+<tr><td>Pezesha, Kenya</td><td><code>leap.pezesha.com</code></td><td>Copied source, a cloud account identifier, and payment-related hostnames. The operator marked a token as expired.</td></tr>
+<tr><td>Redbiller</td><td><code>app.ng.redbiller.com</code></td><td>Copied source and AWS configuration information. The operator marked tokens as expired.</td></tr>
+<tr><td>Billeroo</td><td><code>mail.billeroo.com</code></td><td>456 files, including a GitLab CI token and an internal repository path. The operator described the GitLab host as unreachable from outside.</td></tr>
+<tr><td>TopupMate, Nigeria</td><td><code>connect.topupmate.com</code></td><td>Provider API credentials and card-related notes in the source.</td></tr>
+<tr><td>LeadFellow</td><td><code>www.leadfellow.com</code></td><td>Copied source code.</td></tr>
+<tr><td>Tabis</td><td><code>dev.tabis.app</code></td><td>Copied source and Firebase configuration.</td></tr>
+<tr><td>Transend</td><td><code>staging.transend.com</code>, <code>dev.transend.com</code></td><td>Copied source code.</td></tr>
+<tr><td>Satshot, LandX, PyCashFlow, 3nv, Paysaxas, Generect</td><td><code>www.satshot.com</code>, <code>www.landx.co</code>, <code>www.pycashflow.com</code>, <code>www.3nv.com</code>, <code>affiliate.paysaxas.com</code>, <code>v1.generect.com</code></td><td>Copied source code.</td></tr>
+</table>
+<h2>Other access claims</h2>
+<p>The dump also contains Kestra workflow definitions and the operator's accounts of access to VPN appliances and web applications.</p>
+<table>
+<tr><th><strong>Organization or system</strong></th><th><strong>Finding</strong></th></tr>
+<tr><td>Maki-Justiz: kis-workflows. maki-justiz.de</td><td>configs-revs.json contains 656 saved versions of a Kestra workflow, including shell tasks, KV-store definitions, internal service names, and agent-deployment commands. The definitions show configured activity; execution and data retrieval remain unconfirmed.</td></tr>
+<tr><td>Fraunhofer IFF, Magdeburg: gw1, 129.233.175.10</td><td>The operator's 9 September write-up claims root access on a SonicWall appliance and describes attempts to reach Active Directory iff.intern.</td></tr>
+<tr><td>Other SonicWall appliances</td><td>The operator lists root access on 154.62.73.23, 203.80.0.60, 217.7.5.148, 62.154.214.173, 67.79.93.51, 61.77.113.30, and 213.107.34.70.</td></tr>
+<tr><td>OpenMedia: conan.dev.openmedia.co</td><td>In a 15 September closeout, the operator reports code execution, application errors, and loss of the shell.</td></tr>
+<tr><td>Allianz: 91.206.86.227</td><td>The operator's playbook describes a foothold and a scan detected by CrowdStrike after approximately 30 minutes.</td></tr>
+</table>
+<p>The Kestra workflow method is consistent with CVE-2026-49869, an authentication bypass that allows workflow creation and execution [3].</p>
+<h2>The operator</h2>
+<p>The project instructions and comments in the Business Central export script are written in Russian. In the shell history, we also found ды and сдуфк: ls and clear typed with a Russian keyboard layout selected.</p>
+<table>
+<tr><th><strong>Name or label</strong></th><th><strong>Where it appears</strong></th></tr>
+<tr><td>project1488</td><td>OpenCode project directory, created near the start of the shell-history sequence.</td></tr>
+<tr><td>jagarzon@JAGARZONPT</td><td>Public key in authorized_keys; the same public key also appears under a dental-related filename. An encrypted private key is listed in the key inventory.</td></tr>
+<tr><td>mario@dameuntoque.com</td><td>Public key in authorized_keys, with the filename ssh-mpadillatrevenque.pub.</td></tr>
+<tr><td>TNQJag</td><td>Account for proxies at 45.91.209.156 on ports 13056 and 13058. A list dated 14 September labels them as supplied by the client.</td></tr>
+</table>
+<p>SSH key comments can contain arbitrary text [2], so these labels are leads rather than verified identities.</p>
+<h2>Indicators and detection</h2>
+<p>The following destinations and request patterns appear in the recovered scripts and workflow configurations.</p>
+<table>
+<tr><th><strong>Destination</strong></th><th><strong>Protocol and request pattern</strong></th><th><strong>Role</strong></th></tr>
+<tr><td>89.124.67[.]72:80</td><td>HTTP GET /c?h=&lt;hostname&gt;&amp;t=&lt;last_task&gt;; POST /r/&lt;task&gt;/&lt;sequence&gt;; GET /zb/&lt;hostname&gt;; POST /r/zbx201_office</td><td>Command polling, result uploads, SSH-key callbacks, and reconnaissance uploads.</td></tr>
+<tr><td>89.110.124.250:80</td><td>HTTP paths /ch_curl, /ch_wget, /ch_python, /ch_bash, /ch_httptask, /ch_webhook, and /ch_probe4</td><td>Connectivity checks in the workflow configurations.</td></tr>
+<tr><td>cloud.5671234.xyz</td><td>HTTPS request to /api/file/komari-agent</td><td>Agent download.</td></tr>
+<tr><td>tz2.5671234.xyz</td><td>Connections to the HTTPS endpoint</td><td>Agent server configured in the launch command.</td></tr>
+<tr><td>smallest-relatives-retrieval-henry.trycloudflare.com</td><td>HTTPS request to /komari-agent</td><td>Alternative agent download.</td></tr>
+<tr><td>product-core-referenced-swim.trycloudflare.com</td><td>HTTPS POST /report</td><td>Reporting endpoint.</td></tr>
+</table>
+<p>The polling agent requests commands through /c and sends output to /r/. Its query includes the hostname and last task number, while the result URL includes a task number and chunk sequence. The script appends.ora2 to the hostname it reports and sleeps for eight seconds after each cycle. Commands and network requests add to that interval. It invokes curl, base64, head, and tail from a shell.</p>
+<p>The SSH-key script, a.sh, attempts to append a key to the root and service accounts' authorized_keys files before sending a hostname callback to /zb/. The reconnaissance script, cmd201.sh, reads properties files under /home/service/tomcat/webapps and uploads its output to /r/zbx201_office. In the Kestra workflow history, the Komari download commands save the agent as ka, and the launch command points it to tz2.5671234.xyz.</p>
+<h2>Technical references</h2>
+<p>[1] Microsoft Learn, Business Central demonstration environments</p>
+<p><a href="https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/demo-environment">https://learn.microsoft.com/en-us/dynamics365/business-central/dev-itpro/administration/demo-environment</a></p>
+<p>[2] OpenBSD, sshd(8): Authorized keys file format</p>
+<p><a href="https://man.openbsd.org/sshd.8#AUTHORIZED_KEYS_FILE_FORMAT">https://man.openbsd.org/sshd.8#AUTHORIZED_KEYS_FILE_FORMAT</a></p>
+<p>[3] Kestra, CVE-2026-49869 security advisory</p>
+<p><a href="https://github.com/kestra-io/kestra/security/advisories/GHSA-5vc5-wxxq-3fjx">https://github.com/kestra-io/kestra/security/advisories/GHSA-5vc5-wxxq-3fjx</a></p>
+    </article>
+<div class="tildes" id="tildes" aria-hidden="true"></div>
+</div>
+<footer class="vim-foot">
+    <div class="statusline">
+        <span class="status-file"></span>
+        <span class="status-actions"><span class="status-lines"></span><a class="pdf-link" href="Lazy-Vibes.pdf" download>pdf</a><a href="../index.html">:q close</a></span>
+    </div>
+    <form class="cmdline" id="cmdline">
+        <label for="cmd">:</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" aria-label="Vim command. Type q and press Enter to close and return home.">
+        <span class="cmdmsg" id="cmdmsg"></span>
+    </form>
+</footer>
+</div>
+<script src="../report.js"></script>
+</body>
+</html>

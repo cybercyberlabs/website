@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Technical Analysis of a Fighter-Configured Spyder Downloader - CyberCyber Labs</title>
+    <link rel="stylesheet" href="../report.css">
+</head>
+<body>
+<div class="vim">
+<div class="buf">
+<article>
+<p class="byline">M A LWA R E A N A LY S I S R E P O R T</p>
+<h1>Technical Analysis of a Fighter-Configured Spyder Downloader</h1>
+<p class="deck">A later build matching the Spyder lineage publicly attributed to Patchwork</p>
+<p class="byline">WRITTEN BY</p>
+<p class="byline">Noam Rotem</p>
+<p class="byline">Cyber Cyber Labs</p>
+<p class="byline">cybercyberlabs.com</p>
+<p class="meta"><span>Sample period</span><span>Evidence cutoff</span></p>
+<p class="meta"><span>July 2024</span><span>26 July 2026, 09:20 UTC</span></p>
+<p class="meta"><span>Classification</span><span>Technical lineage</span></p>
+<p class="meta"><span>Windows downloader / loader</span><span>Spyder - Fighter branch</span></p>
+<p class="byline">VERSION 1.0 | PUBLISHED 26 JULY 2026</p>
+<p>Executive Summary</p>
+<ol><li>Provenance, Scope, and Sample Overview</li><li>Packaging, Masquerade, and Signing</li><li>Execution, Persistence, and Defense Evasion</li><li>Host Profiling and Command-and-Control</li><li>Payload Delivery</li><li>Defensive Reacquisition of the C2 Domain</li><li>Comparison with QiAnXin's 2024 Spyder Research</li><li>Attribution Assessment</li><li>Conclusion</li></ol>
+<p>Appendices</p>
+<p>Appendix A - Indicators</p>
+<p>Appendix B - ATT&amp;CK Mapping</p>
+<p>Appendix C - Key Functions</p>
+<p>Appendix D - Evidence Index</p>
+<p>References</p>
+<p><strong>Version 1.0 | Published 26 July 2026</strong></p>
+<p><strong>Sample period:</strong> July 2024</p>
+<p><strong>Evidence cutoff:</strong> 2026-07-26 09:20 UTC</p>
+<p><strong>Primary classification:</strong> Windows downloader / loader</p>
+<p><strong>Technical lineage:</strong> Spyder, <code>Fighter</code> configuration branch</p>
+<p><strong>Public actor attribution:</strong> Patchwork; QiAnXin tracking designation <code>APT-Q-36</code></p>
+<h2>Executive Summary</h2>
+<p>The original encrypted archive analyzed in this report was forwarded by a staff member from the office of a high-ranking Indian political figure and preserved unchanged. The political figure and source office are known to the author but are not named because doing so would not add to the technical findings.</p>
+<p>The archive contained a signed 32-bit Windows downloader disguised as Logitech G HUB software. Its apparent size was 902,087,680 bytes, but only 2,077,184 bytes contained the functional PE image. The executable was expanded with exactly <strong>900,000,000 zero bytes</strong> before the Authenticode certificate was appended. Matching embedded and calculated digests establish that the padding was part of the signed packaging workflow rather than later corruption. [E1-E2]</p>
+<p>The malware restores clean executable sections in ten loaded Windows system DLLs, creates five one-time scheduled tasks, and copies the entire padded file to <code>%LOCALAPPDATA%\Screen_.exe</code>. It collects a stable machine identifier, hostname, username, Windows version, and installed antivirus products. It is configured to communicate over unencrypted HTTP with <code>systembackupsvault[.]com</code>, placing modified-Base64 JSON ina custom <code>boop</code> request header. The server can instruct it to download a password-protected ZIP archive, extract each entry into the Windows Internet Cache, and attempt to launch the extracted files. [E3-E7] The sample matches with high confidence the <code>Fighter</code>-configured Spyder downloader lineage described by QiAnXin in August 2024. The match includes the same profile value, registration schema, custom header, encoding, C2 paths, task schedule, encrypted-ZIP delivery model, DLL-restoration routine, and signing subject. QiAnXin attributes that lineage to Patchwork. This investigation independently establishes the technical lineage; the Patchwork association relies partly on QiAnXin's public actor attribution. [R1-R2] During the analysis, the embedded C2 domain was found to have expired and become available. It was acquired defensively and redirected to a controlled sinkhole at <strong>2026-07-16 10:25:46 UTC</strong>. By <strong>2026-07-26 09:20 UTC</strong>, the sinkhole had received <strong>11,534 requests from 748 unique IP addresses</strong>. None matched the malware's distinctive <code>/soup/pencil.php</code> and <code>boop</code> protocol. The traffic was overwhelmingly generic Internet scanning. This produced no evidence of surviving callbacks to this domain during almost ten days of observation, but it does not prove that no infected systems or related infrastructure remain elsewhere. [E9]</p>
+<p>The evidence supports high-confidence attribution to the Spyder family and Fighter lineage. It does not identify the human operator, the certificate-abuse mechanism, a contractor, a named government agency, or the sponsor of this specific operation. The confirmed targeting of a high-ranking Indian political office is noteworthy because public reporting commonly describes Patchwork as Indian or pro-Indian; the available evidence does not determine whether this reflects domestic collection, a separate operational customer, shared tooling, or limitations in existing cluster attribution.</p>
+<h3>Confidence terminology</h3>
+<table>
+<tr><th><strong>Term</strong></th><th><strong>Meaning in this report</strong></th></tr>
+<tr><td><strong>Certain</strong></td><td>Directly observed and reproducible in the supplied sample or sinkhole records.</td></tr>
+<tr><td><strong>High confidence</strong></td><td>Supported by several distinctive, mutually consistent observations.</td></tr>
+<tr><td><strong>Moderate</strong></td><td>More likely than alternatives, but important evidence is missing.</td></tr>
+<tr><td><strong>Plausible</strong></td><td>Compatible with the evidence but not established.</td></tr>
+<tr><td><strong>Unsupported</strong></td><td>No affirmative evidence in this investigation.</td></tr>
+</table>
+<h2>1. Provenance, Scope, and Sample Overview</h2>
+<p>The encrypted delivery archive was forwarded by a staff member from the targeted political office. The archive was retained unchanged and analyzed without executing the malware. This report addresses the artifact, its technical lineage, and the infrastructure exposed by the binary. It does not attempt to reconstruct incident-response facts that were documented elsewhere.</p>
+<p>Analysis included archive inspection, cryptographic hashing, PE and resource analysis, Authenticode extraction, import mapping, address-level disassembly, runtime-string decoding, Task Scheduler and WMI COM reconstruction, C2 protocol reconstruction, library identification, static cross-reference analysis, and defensive monitoring of the expired C2 domain.</p>
+<table>
+<tr><th><strong>Property</strong></th><th><strong>Value</strong></th></tr>
+<tr><td>Delivery filename</td><td><code>[Politically themed filename referencing the targeted office].exe</code></td></tr>
+
+<tr><td>Archive protection</td><td>AES-256 encrypted ZIP</td></tr>
+<tr><td>Full-file size</td><td>902,087,680 bytes</td></tr>
+<tr><td>Full-file SHA-256</td><td><code>bfeee28529c186b266ad8bec29f7a866d9ff7bbfaf32959a37e4de1006bcad08</code></td></tr>
+<tr><td>Functional PE size</td><td>2,077,184 bytes</td></tr>
+<tr><td>PE-core SHA-256</td><td><code>1bdb5bf22d74756a4c9da7dea447a851cf15bb83f4072469ed9cc374a46070cd</code></td></tr>
+<tr><td>Architecture</td><td>32-bit Intel Windows GUI executable</td></tr>
+<tr><td>PE timestamp</td><td>2024-07-15 17:24:07 UTC (0x66955B37)</td></tr>
+<tr><td>Linker</td><td>Microsoft linker version 14.0</td></tr>
+</table>
+<p>The file contains no Rich header, debug directory, PDB path, or recoverable source-build path. This is consistent with metadata removal or a build workflow that did not retain those artifacts, but the sample does not distinguish between those explanations. [E1]</p>
+<h2>2. Packaging, Masquerade, and Signing</h2>
+<h3>2.1 Exact signed-padding layout</h3>
+<p><strong>Signed file layout</strong></p>
+<table>
+<tr><th>Functional PE</th><th>Zero padding</th><th>Signature</th></tr>
+<tr><td>2,077,184 bytes</td><td>exactly 900,000,000 bytes</td><td>10,496 bytes</td></tr>
+</table>
+<p>Total: 902,087,680 bytes. Matching Authenticode digests show that the padding was present when the file was signed.</p>
+<p>Signed file layout</p>
+<p>The functional PE ends at file offset 0x001FB200; the certificate table begins at 0x35C49B00 and is 10,496 bytes long. The exact 900,000,000-byte gap is all-zero padding. Because Authenticode excludes the certificate table but covers the preceding file content, the matching digest proves that the padded structure was present when the executable was signed. [E1-E2]</p>
+<p>This design provides a compact delivery artifact when compressed while producing a very large extracted executable. It can frustrate pipelines with file-size, upload, storage, or analysis-time limits. It also imposes costs on the malware: the 32-bit process attempts to allocate and copy roughly 902 MB into LocalAppData, which can fail on systems with constrained address space, memory, or disk capacity.</p>
+<h3>2.2 Logitech masquerade</h3>
+<p>The version resources claim Logitech G HUB identity, including Logitech, Inc., G HUB, Logitech G HUB System Tray, and logi_system_tray.app. The resource section includes Logitech-themed visual assets and a large WinUI manifest. The file is not signed by Logitech and its behavior is unrelated to G HUB. [E1]</p>
+<p>Other camouflage is less coherent: the persistence copy is named Screen_.exe, the tasks use the Screen_int prefix, and the Task Scheduler author is ASUS. The mixture suggests reusable packaging and persistence templates rather than a single carefully consistent vendor imitation.</p>
+<h3>2.3 Code-signing identity</h3>
+<table>
+<tr><th><strong>Property</strong></th><th><strong>Value</strong></th></tr>
+<tr><td>Subject</td><td>Xi'an Qinxuntao Network Technology Co., Ltd.</td></tr>
+<tr><td>Corporate identifier</td><td>91610113MA6X13GR4H</td></tr>
+<tr><td>Issuer</td><td>Certum Extended Validation Code Signing 2021 CA</td></tr>
+<tr><td>Serial</td><td>7E62CF95CF6830668D5433052DC63A62</td></tr>
+<tr><td>SHA-256 certificate fingerprint</td><td>58486F3B9B6F693C0685C6F3026D1C8A6621DBC72965F505B4A904A30934601D</td></tr>
+<tr><td>Validity</td><td>2024-05-08 to 2025-05-08</td></tr>
+<tr><td>Embedded countersignature time</td><td>2024-07-17 14:14:40 UTC</td></tr>
+</table>
+<p>The osslsigncode verification run reported certificate expiry, while the embedded and calculated file digests matched. The historical validity of the countersignature chain was not independently established. [E2] The certificate holder is an attribution pivot, not proof of Chinese operation. Plausible explanations include certificate or token compromise, fraudulent issuance, a shell entity, an insider, a signing service, or knowing participation. The sample does not distinguish among them.</p>
+<h2>3. Execution, Persistence, and Defense Evasion</h2>
+<figure><img src="media/spyder-fighter/diagram-p6.png" alt="Launch Restore .text in 10 system DLLs Create five one-time tasks Copy full padded file to %LOCALAPPDATA%\Screen_.exe Send base registration xdid + about C2 returns 1? Collect hostname, user, Windows version, AV products"></figure>
+<p>Execution and C2 lifecycle</p>
+<h3>3.1 Restoration of system-DLL code</h3>
+<p>The malware maps clean System32 images and overwrites the loaded.text sections of ten DLLs: kernel32.dll, ntdll.dll, ADVAPI32.dll, SHELL32.dll, ole32.dll, OLEAUT32.dll, CRYPT32.dll, WS2_32.dll, WININET.dll, and bcrypt.dll.</p>
+<p>The routine uses GetModuleHandleW, maps the disk image with SEC_IMAGE, locates.text, changes the loaded section protection with VirtualProtect, copies the clean bytes, and restores the original protection.</p>
+<p>This can remove inline user-mode hooks installed by security products, sandboxes, or instrumentation. No claim is made that a particular commercial product was successfully bypassed. [E4]</p>
+<p>The code incorrectly calls FreeLibrary on module handles obtained through GetModuleHandleW. This API-lifecycle mistake, together with other defects below, is useful as a source-lineage fingerprint.</p>
+<h3>3.2 Persistence copy and scheduled tasks</h3>
+<p>The malware constructs %LOCALAPPDATA%\Screen_.exe. It first attempts to delete and re-register five tasks that point to this path, then reads its own full padded executable and writes it to the destination. [E5]</p>
+<table>
+<tr><th><strong>Task</strong></th><th><strong>One-time boundary</strong></th></tr>
+<tr><td>Screen_int A</td><td>14:00</td></tr>
+<tr><td>Screen_int B</td><td>15:00</td></tr>
+<tr><td>Screen_int C</td><td>16:00</td></tr>
+<tr><td>Screen_int D</td><td>17:00</td></tr>
+<tr><td>Screen_int E</td><td>18:00</td></tr>
+</table>
+<p>The tasks use TASK_TRIGGER_TIME, TASK_CREATE_OR_UPDATE, and TASK_LOGON_INTERACTIVE_TOKEN. The code calls ITaskSettings::put_StartWhenAvailable(TRUE). Microsoft documents that this setting applies only to time-based tasks with an end boundary or tasks that repeat indefinitely; neither condition was established here, so its practical effect is uncertain. The code writes PT5M through IIdleSettings::put_WaitTimeout, which is an idle-condition wait value rather than a repetition interval. RestartOnIdle is set, but Microsoft documents that it is used only when StopOnIdleEnd is true, which was not established. [R3-R6]</p>
+<p>The five staggered boundaries are best interpreted as fallback execution opportunities. An earlier successful launch recreates the task set for a new date before later boundaries normally occur. This interpretation is based on the observed control flow rather than a documented operator statement.</p>
+<h3>3.3 Task-date defects</h3>
+<p>The malware obtains UTC time with GetSystemTime and constructs the boundary as:</p>
+<p>&lt;year&gt;-&lt;month&gt;-&lt;day + 1&gt;T&lt;hard-coded time&gt;</p>
+<p>It performs no calendar normalization. At month-end it may generate invalid dates such as</p>
+<p>2024-07-32T14:00:00. It also omits a UTC marker or offset. Microsoft documents that a StartBoundary without an offset uses the local computer's timezone and daylight-saving configuration. The malware therefore combines a UTC-derived date with local-time interpretation. [E5, R3]</p>
+<h3>3.4 Defective mutex</h3>
+<p>The implant creates the named mutex:</p>
+<p>T9zDZZVxfMECyLHBrw9dmMNzgz24RWxL2p</p>
+<p>It checks only whether CreateMutexW returned NULL and never tests ERROR_ALREADY_EXISTS. The mutex does not correctly enforce single-instance execution. [E5]</p>
+<h2>4. Host Profiling and Command-and-Control</h2>
+<h3>4.1 Configuration</h3>
+<table>
+<tr><th><strong>Field</strong></th><th><strong>Value</strong></th></tr>
+<tr><td>Version</td><td>0.0.0.1</td></tr>
+<tr><td>Protocol</td><td>HTTP</td></tr>
+<tr><td>Host</td><td>systembackupsvault[.]com</td></tr>
+<tr><td>Base path</td><td>/soup/</td></tr>
+<tr><td>Registration/poll endpoint</td><td>pencil.php</td></tr>
+<tr><td>Payload endpoint</td><td>download.php?mname=</td></tr>
+<tr><td>Poll delay</td><td>4,000 ms</td></tr>
+<tr><td>Profile</td><td>Fighter</td></tr>
+</table>
+<p>Fighter is build-time configuration sent to the server under jupiter.profile. It is not victim-derived. The value may represent a project, branch, campaign family, customer, operator channel, or backend-routing profile; the sample cannot determine which. [E3, E6]</p>
+<h3>4.2 Registration and profiling</h3>
+<p>The implant initially sends a base JSON object containing:</p>
+<pre><code>{
+"xdid": "&lt;encoded MachineGuid&gt;",
+"about": "&lt;encoded 0.0.0.1&gt;"
+}</code></pre>
+<p>If the server responds with 1, the malware gathers and temporarily adds:</p>
+<pre><code>{
+"jupiter" : {
+"address": "&lt;encoded fully qualified hostname&gt;",
+"page_id": "&lt;encoded username&gt;",
+"weather": "&lt;encoded Windows ProductName&gt;",
+"profile": "&lt;encoded Fighter&gt;",
+"news": "&lt;encoded antivirus-product data&gt;"
+}
+}</code></pre>
+<p>Antivirus information is obtained through WMI by connecting to root\SecurityCenter2, executing SELECT * FROM AntiVirusProduct, and reading each displayName. After the detailed registration is sent, jupiter is removed and the base object is reused for polling. [E6]</p>
+<h3>4.3 Wire protocol</h3>
+<p>JSON object</p>
+<p>Base64</p>
+<p>Replace + / = with . _ - boop: &lt;encoded value&gt;</p>
+<p>POST /soup/pencil.php</p>
+<p>empty body</p>
+<p>Server response</p>
+<table>
+<tr><th>0 or &lt;=5 bytes:</th><th>&gt;5 bytes:</th></tr>
+
+<tr><td>sleep and poll again</td><td>decode task JSON</td></tr>
+</table>
+<p>C2 encoding and response handling</p>
+<p>The verified C2 channel uses WinINet and an empty request body. JSON is Base64-encoded and then transformed:</p>
+<p>+ -&gt; .</p>
+<p>/ -&gt; _</p>
+<p>= -&gt; - The result is carried in:</p>
+<p>boop: &lt;encoded JSON&gt;</p>
+<p>The hard-coded user agent impersonates Chrome 104 on macOS. A response of 0, or any response no longer than five bytes, leads to a four-second sleep and another poll. A longer response is decoded as a task. [E3]</p>
+<h2>5. Payload Delivery</h2>
+<p>A decoded task contains first, middle, and last fields. The sample uses them as follows:</p>
+<table>
+<tr><th><strong>Field</strong></th><th><strong>Use in this build</strong></th></tr>
+<tr><td>first</td><td>Parsed numerically and acknowledged as thread_id</td></tr>
+<tr><td>middle</td><td>Archive name and mname parameter</td></tr>
+<tr><td>last</td><td>ZIP extraction password</td></tr>
+</table>
+<p>The malware constructs:</p>
+<p>hxxp://systembackupsvault[.]com/soup/download.php?mname=&lt;middle&gt;</p>
+<p>It retrieves the archive with URLOpenBlockingStreamW, stores it as %LOCALAPPDATA%\&lt;middle&gt;.zip, and processes it with minizip-compatible routines and zlib code containing 1.3.1 version strings. Each archive entry is written to the Windows Internet Cache and passed to CreateProcessW. The code <strong>attempts</strong> to launch every entry; static analysis cannot establish that process creation succeeds. [E7]</p>
+<p>The archive is deleted after processing, while extracted files remain. The malware then sends thread_id, removes it from the persistent JSON object, and resumes polling. The acknowledgement indicates completion of the downloader's extraction and launch attempts, not successful completion of a child payload.</p>
+<p>The stage-one sample does not itself implement screenshot capture, file theft, credential theft, keylogging, ransomware, or an interactive shell. It is a modular delivery and profiling component; follow-on capabilities depend on server-selected payloads.</p>
+<h2>6. Defensive Reacquisition of the C2 Domain</h2>
+<p>Static analysis identified systembackupsvault[.]com as the configured C2 domain. Infrastructure checks showed that the registration had expired and the domain was available. It was acquired defensively and redirected to a controlled sinkhole beginning at <strong>2026-07-16 10:25:46 UTC</strong>. Current DNS and hosting data after that time describe the research sinkhole, not attacker infrastructure. [E9]</p>
+<figure><img src="media/spyder-fighter/fig-01.png" alt=""></figure>
+<p>Sinkhole traffic by day</p>
+<p>At the evidence cutoff, <strong>2026-07-26 09:20 UTC</strong>, the sinkhole had operated for 9 days, 22 hours, 54 minutes, and 14 seconds.</p>
+<table>
+<tr><th><strong>Metric</strong></th><th><strong>Result</strong></th></tr>
+<tr><td>Total requests</td><td>11,534</td></tr>
+<tr><td>Unique source IPs</td><td>748</td></tr>
+<tr><td>GET</td><td>11,450</td></tr>
+<tr><td>HEAD</td><td>60</td></tr>
+<tr><td>POST</td><td>24</td></tr>
+
+<tr><td>Previous 24 hours</td><td>1,034 requests from 72 IPs</td></tr>
+<tr><td>Requests matching the malware protocol</td><td><strong>0</strong></td></tr>
+</table>
+<p>None of the requests matched the expected Spyder protocol: no confirmed implant request combined the relevant /soup/behavior, boop header, user agent, and encoded-message structure. The traffic was consistent with generic automated scanning. Country counts must not be interpreted as victim locations; several countries' totals were dominated by a small number of high-volume sources.</p>
+<p>The sinkhole did not issue tasks or host payloads, and no matching callback or victim identifier was received.</p>
+<p>The result provides no evidence of active callbacks to this domain during the observation window. It cannot establish that no infected hosts remain, that no host uses cached historical infrastructure, or that other Spyder domains are inactive.</p>
+<h2>7. Comparison with QiAnXin's 2024 Spyder Research</h2>
+<p>QiAnXin published an August 2024 analysis of a Spyder downloader compiled on June 4, 2024 and attributed the activity to Patchwork /APT-Q-36. The present sample was compiled approximately 41 days later. Direct binary diffing was not possible, so the comparison is limited to behavior and artifacts documented in the public report. [R1]</p>
+<table>
+<tr><th><strong>Stable lineage features</strong></th><th><strong>Sample-specific or deployment changes</strong></th></tr>
+<tr><td>Fighter profile and 0.0.0.1 version</td><td>C2 changed from onlinecsstutorials[.]com to systembackupsvault[.]com</td></tr>
+<tr><td>xdid, about, and jupiter schema</td><td>Mutex changed</td></tr>
+<tr><td>address, page_id, weather, profile, news</td><td>Copy name changed from zlib1.exe to Screen_.exe</td></tr>
+<tr><td>boop header and modified Base64</td><td>Task prefix changed from zlib data compression to Screen_int</td></tr>
+<tr><td>/soup/pencil.php and download.php?mname=</td><td>Logitech resources and ASUS task author</td></tr>
+<tr><td>Five one-time task times, 14:00-18:00</td><td>Political lure and encrypted delivery archive</td></tr>
+<tr><td>Password-protected ZIP delivery and Internet Cache staging</td><td>Exact 900,000,000-byte signed padding documented in this sample</td></tr>
+<tr><td>Ten-DLL .text restoration</td><td>Published decoy URLs present but no static references recovered</td></tr>
+<tr><td>Same signing subject</td><td>first observed as acknowledgement thread_id</td></tr>
+</table>
+<p>The stability of the protocol, task template, profile value, and source-level quirks establishes a common technical lineage. The changed domain, mutex, persistence names, task metadata, and masquerade are consistent with campaign or build configuration.</p>
+<p>QiAnXin reported active decoy requests to GitHub and Google endpoints. The same literal URLs are present in this binary, but Ghidra cross-reference analysis and direct disassembly searches recovered no static references. They are therefore assessed with high confidence as inactive data in this build, while acknowledging that static analysis cannot absolutely exclude a computed or indirect reference. Their persistence is consistent with source-tree or linked-library residue. [E8, R1]</p>
+<p>QiAnXin also observed screenshot and file-information collection components delivered by Spyder. Those findings establish capabilities used in the broader lineage, not payloads delivered by this particular C2. No follow-on component from systembackupsvault[.]com was recovered.</p>
+<h2>8. Attribution Assessment</h2>
+<h3>8.1 Technical lineage</h3>
+<p>The sample belongs to Spyder and the Fighter configuration lineage with high confidence. The conclusion rests on an unusually specific protocol and implementation fingerprint rather than generic techniques.</p>
+<h3>8.2 Patchwork association</h3>
+<p>The sample matches with high confidence the Spyder lineage that QiAnXin attributes to Patchwork. The resulting Patchwork association is strong but partly inherited from that public actor attribution; this investigation independently proves the technical match, not the identity of the operators. MITRE describes Patchwork as a cyber-espionage group whose attribution is not definitive, while noting circumstantial evidence of an Indian or pro-Indian nexus. [R1-R2]</p>
+<h3>8.3 Confirmed Indian political targeting</h3>
+<p>The archive's provenance establishes that a high-ranking Indian political office was targeted. This is analytically important because public reporting commonly presents Patchwork as Indian or pro-Indian.</p>
+<p>Possible explanations include domestic political collection, use of Spyder by a separate customer or team, shared development or infrastructure suppliers, or limitations in existing actor-cluster attribution. The sample does not distinguish among them.</p>
+<h3>8.4 Signer and developer implications</h3>
+<p>The Chinese certificate subject is not evidence of Chinese sponsorship. Exact certificate pivots and the corporate identifier may reveal a compromised subscriber, fraudulent issuance, broker, shell company, or supplier, but this investigation does not resolve the relationship.</p>
+<p>A distinctive developer or builder fingerprint emerges from the combination of:</p>
+<ul><li>positional TLS-backed XOR string initialization;</li><li>the custom Base64 alphabet and boop protocol;</li><li>the jupiter schema and Fighter profile;</li><li>ten-DLL.text restoration;</li><li>FreeLibrary(GetModuleHandleW(...)) misuse;</li><li>defective mutex handling;</li><li>five one-time tasks with naive day + 1 construction;</li><li>UTC/local boundary mismatch;</li><li>manual whole-file self-copy;</li><li>encrypted multi-entry ZIP execution;</li><li>dead CPR/libcurl-related URL data;</li><li>and exact 900,000,000-byte signed padding.</li></ul>
+<p>These features can support future sample clustering. They do not identify a named person or organization.</p>
+<h3>8.5 Attribution conclusion</h3>
+<table>
+<tr><th><strong>Layer</strong></th><th><strong>Assessment</strong></th></tr>
+<tr><td>Malicious downloader behavior</td><td>Certain</td></tr>
+<tr><td>Spyder family</td><td>High confidence</td></tr>
+<tr><td>Fighter lineage</td><td>High confidence</td></tr>
+<tr><td>Match to QiAnXin's documented variant</td><td>High confidence</td></tr>
+<tr><td>Patchwork association</td><td>Strong; conditional in part on QiAnXin's attribution</td></tr>
+<tr><td>Indian/pro-Indian nexus</td><td>Contextual, not independently proven by this sample</td></tr>
+<tr><td>Same individual developer</td><td>Unresolved</td></tr>
+<tr><td>Certificate holder's role</td><td>Unresolved</td></tr>
+<tr><td><strong>Layer</strong></td><td><strong>Assessment</strong></td></tr>
+<tr><td>Named agency or government sponsor</td><td>Unsupported</td></tr>
+</table>
+<h2>9. Conclusion</h2>
+<p>The analyzed artifact is a signed, deliberately oversized Windows downloader from the Fighter-configured Spyder lineage. It was supplied from a confirmed high-ranking Indian political target, combines a political lure with Logitech masquerade, establishes scheduled-task persistence, profiles the host and its security products, and uses a distinctive custom HTTP protocol to obtain encrypted follow-on payloads.</p>
+<p>The strongest attribution finding is technical: the sample matches the Spyder lineage documented by QiAnXin with high confidence. Its association with Patchwork is strong but depends partly on QiAnXin's actor attribution. The confirmed Indian political victimology introduces an important tension with the usual Indian/pro-Indian characterization of Patchwork and may indicate domestic collection, shared tooling, multiple customers, or an incomplete public cluster model.</p>
+<p>The defensive reacquisition of the expired C2 domain added a rare operational observation. Nearly ten days of sinkhole monitoring produced 11,534 requests but no traffic matching the malware protocol. That result narrows the current activity assessment for this specific domain without supporting broader claims that the campaign or all infections are inactive.</p>
+<p>The sample does not reveal the human operator, sponsor, certificate-abuse mechanism, or payloads assigned to this target. Those questions require external delivery, certificate, provider, infrastructure, or law-enforcement evidence rather than further interpretation of this binary alone.</p>
+<h2>Appendices</h2>
+<h2>Appendix A - Indicators</h2>
+<h3>Files and certificate</h3>
+<table>
+<tr><th><strong>Type</strong></th><th><strong>Value</strong></th></tr>
+<tr><td>Full-file SHA-256</td><td>bfeee28529c186b266ad8bec29f7a866d9ff7bbfaf32959a37e4de1006bcad08</td></tr>
+<tr><td>PE-core SHA-256</td><td>1bdb5bf22d74756a4c9da7dea447a851cf15bb83f4072469ed9cc374a46070cd</td></tr>
+<tr><td>PE-core SHA-1</td><td>f1ec0f60df9b5f63bc7f2fd18f3247e8d0341702</td></tr>
+<tr><td>PE-core MD5</td><td>b0838f6aa79f5b7554d76d097cfb80b3</td></tr>
+<tr><td>Persistence file</td><td>%LOCALAPPDATA%\Screen_.exe</td></tr>
+<tr><td>Exact padding</td><td>900,000,000 zero bytes</td></tr>
+<tr><td>Certificate serial</td><td>7E62CF95CF6830668D5433052DC63A62</td></tr>
+<tr><td>Certificate SHA-256</td><td>58486F3B9B6F693C0685C6F3026D1C8A6621DBC72965F505B4A904A30934601D</td></tr>
+</table>
+<h3>Network and host</h3>
+<table>
+<tr><th><strong>Type</strong></th><th><strong>Value</strong></th></tr>
+<tr><td>C2 domain</td><td>systembackupsvault[.]com</td></tr>
+<tr><td>Registration/poll path</td><td>/soup/pencil.php</td></tr>
+<tr><td>Payload path</td><td>/soup/download.php?mname=</td></tr>
+<tr><td>Header</td><td>boop</td></tr>
+<tr><td>Poll interval</td><td>4 seconds</td></tr>
+<tr><td>Mutex</td><td>T9zDZZVxfMECyLHBrw9dmMNzgz24RWxL2p</td></tr>
+<tr><td>Tasks</td><td>Screen_int A through Screen_int E</td></tr>
+<tr><td>Task author</td><td>ASUS</td></tr>
+<tr><td>WMI namespace</td><td>root\SecurityCenter2</td></tr>
+<tr><td>WMI query</td><td>SELECT * FROM AntiVirusProduct</td></tr>
+</table>
+<h2>Appendix B - ATT&amp;CK Mapping</h2>
+<table>
+<tr><th><strong>Technique</strong></th><th><strong>ID</strong></th><th><strong>Evidence</strong></th></tr>
+<tr><td>User Execution: Malicious File</td><td>T1204.002</td><td>Encrypted archive and deceptive executable filename</td></tr>
+<tr><td>Masquerading</td><td>T1036</td><td>Logitech identity and utility-themed task names</td></tr>
+<tr><td>Code Signing</td><td>T1553.002</td><td>Signed malicious executable</td></tr>
+<tr><td>Binary Padding</td><td>T1027.001</td><td>Exact 900,000,000-byte padding</td></tr>
+<tr><td>Obfuscated Files or Information</td><td>T1027</td><td>Encoded strings and modified Base64</td></tr>
+<tr><td>Scheduled Task/Job: Scheduled Task</td><td>T1053.005</td><td>Five COM-created time triggers</td></tr>
+<tr><td>Query Registry</td><td>T1012</td><td>MachineGuid and ProductName</td></tr>
+<tr><td>System Owner/User Discovery</td><td>T1033</td><td>GetUserNameW</td></tr>
+<tr><td>System Information Discovery</td><td>T1082</td><td>Hostname and Windows product information</td></tr>
+<tr><td>Security Software Discovery</td><td>T1518.001</td><td>WMI antivirus enumeration</td></tr>
+<tr><td>Application Layer Protocol: Web Protocols</td><td>T1071.001</td><td>HTTP C2</td></tr>
+<tr><td>Data Encoding</td><td>T1132.001</td><td>Base64 with custom substitutions</td></tr>
+<tr><td>Ingress Tool Transfer</td><td>T1105</td><td>Remote encrypted-ZIP retrieval</td></tr>
+<tr><td>Deobfuscate/Decode Files</td><td>T1140</td><td>Password-protected ZIP extraction</td></tr>
+<tr><td>Impair Defenses</td><td>T1562.001</td><td>Replacement of loaded DLL.text sections</td></tr>
+<tr><td>File Deletion</td><td>T1070.004</td><td>Downloaded archive deletion</td></tr>
+</table>
+<h2>Appendix C - Key Functions</h2>
+<table>
+<tr><th><strong>Address</strong></th><th><strong>Analytical label</strong></th><th><strong>Role</strong></th></tr>
+<tr><td>0x401000</td><td>Encoder</td><td>Base64 and custom substitutions</td></tr>
+<tr><td>0x4015B0</td><td>DLL restorer</td><td>Replaces loaded .text sections</td></tr>
+<tr><td>0x401800</td><td>WinINet POST</td><td>Registration, polling, acknowledgement</td></tr>
+<tr><td>0x401950</td><td>URLMon downloader</td><td>Retrieves payload archive</td></tr>
+<tr><td>0x401A40</td><td>Registry reader</td><td>MachineGuid and ProductName</td></tr>
+<tr><td>0x401AE0</td><td>Task builder</td><td>Creates one-time scheduled tasks</td></tr>
+<tr><td>0x402700</td><td>Configuration initializer</td><td>C2 and profile structure</td></tr>
+<tr><td>0x402B30</td><td>WMI collector</td><td>Antivirus-product enumeration</td></tr>
+<tr><td>0x402F30</td><td>Payload handler</td><td>Write, extract, launch, cleanup</td></tr>
+<tr><td>0x403260</td><td>Main orchestration</td><td>Startup, persistence, C2, polling</td></tr>
+</table>
+<h2>Appendix D - Evidence Index</h2>
+<table>
+<tr><th><strong>ID</strong></th><th><strong>Finding group</strong></th><th><strong>Primary basis</strong></th></tr>
+<tr><td>E1</td><td>Sample identity, PE metadata,</td><td>Original archive, full file, PE-core</td></tr>
+<tr><td></td><td>resources, padding</td><td>extraction, PE parsing</td></tr>
+<tr><td>E2</td><td>Signature and certificate</td><td>Authenticode extraction and osslsigncode output</td></tr>
+<tr><td>E3</td><td>Configuration and C2</td><td>Function 0x402700; WinINet routine 0x401800; decoded constants</td></tr>
+<tr><td>E4</td><td>DLL restoration</td><td>Function 0x4015B0; API mapping and section-name confirmation</td></tr>
+<tr><td>E5</td><td>Persistence and task semantics</td><td>Function 0x401AE0; five call sites; COM vtable mapping</td></tr>
+<tr><td>E6</td><td>Registration and profiling</td><td>Main control flow; WMI function 0x402B30; decoded JSON keys</td></tr>
+<tr><td>E7</td><td>Payload delivery</td><td>URLMon routine 0x401950; payload function 0x402F30</td></tr>
+<tr><td>E8</td><td>Inactive URL assessment</td><td>Ghidra XREF output and direct disassembly-reference search</td></tr>
+<tr><td>E9</td><td>Sinkhole</td><td>Controlled-domain HTTP logs through 2026-07-26 09:20 UTC</td></tr>
+<tr><td>E10</td><td>Provenance</td><td>Original unchanged archive forwarded by staff from targeted office</td></tr>
+</table>
+<h2>References</h2>
+<ul><li><strong>R1.</strong> QiAnXin Threat Intelligence Center - Analysis of New Variants and Subsequent Components of Patchwork Spyder Downloader, 23 August 2024.</li><li><strong>R2.</strong> MITRE ATT&amp;CK - Patchwork, G0040.</li><li><strong>R3.</strong> Microsoft - ITrigger::put_StartBoundary.</li><li><strong>R4.</strong> Microsoft - ITaskSettings::put_StartWhenAvailable.</li><li><strong>R5.</strong> Microsoft - IIdleSettings::put_RestartOnIdle.</li><li><strong>R6.</strong> Microsoft - IIdleSettings::put_WaitTimeout.</li><li><strong>R7.</strong> MITRE ATT&amp;CK - User Execution: Malicious File, T1204.002.</li></ul>
+    </article>
+<div class="tildes" id="tildes" aria-hidden="true"></div>
+</div>
+<footer class="vim-foot">
+    <div class="statusline">
+        <span class="status-file"></span>
+        <span class="status-actions"><span class="status-lines"></span><a class="pdf-link" href="Spyder-Fighter-Analysis.pdf" download>pdf</a><a href="../index.html">:q close</a></span>
+    </div>
+    <form class="cmdline" id="cmdline">
+        <label for="cmd">:</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" aria-label="Vim command. Type q and press Enter to close and return home.">
+        <span class="cmdmsg" id="cmdmsg"></span>
+    </form>
+</footer>
+</div>
+<script src="../report.js"></script>
+</body>
+</html>

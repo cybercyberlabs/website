@@ -52,11 +52,11 @@
     <script>
     // Work content array - shared between initial page load and work command
     const workContent = [
-        '<a href="reports/Lazy-Vibes.pdf" target="_blank" rel="noopener noreferrer" class="underlined">September 2026: Lazy Vibes - Working files of an operation that told AI agents to pentest: scanners, exploit scripts, copied source, credentials, and command agents</a>',
-        '<a href="reports/Inside-Exposed-C2.pdf" target="_blank" rel="noopener noreferrer" class="underlined">August 2026:Inside Exposed C2 - Brazilian government compromise, credential theft, mass exploitation, cryptomining, and SEO malware</a>',
-        '<a href="reports/Spyder-Fighter-Analysis.pdf" target="_blank" rel="noopener noreferrer" class="underlined">June 2026: Spyder Fighter - Analysis of Spyder malware targeting an Indian political office, including defensive C2 sinkholing.</a>',
-        '<a href="reports/Salted_Leeches.pdf" target="_blank" rel="noopener noreferrer" class="underlined">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a>',
-        '<a href="reports/Shiny_Nemesis.pdf" target="_blank" rel="noopener noreferrer" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a>'
+        '<a href="reports/lazy-vibes.html" class="underlined">September 2026: Lazy Vibes - Working files of an operation that told AI agents to pentest: scanners, exploit scripts, copied source, credentials, and command agents</a> (<a href="reports/Lazy-Vibes.pdf" download class="underlined">PDF</a>)',
+        '<a href="reports/inside-exposed-c2.html" class="underlined">August 2026: Inside Exposed C2 - Brazilian government compromise, credential theft, mass exploitation, cryptomining, and SEO malware</a> (<a href="reports/Inside-Exposed-C2.pdf" download class="underlined">PDF</a>)',
+        '<a href="reports/spyder-fighter.html" class="underlined">June 2026: Spyder Fighter - Analysis of Spyder malware targeting an Indian political office, including defensive C2 sinkholing.</a> (<a href="reports/Spyder-Fighter-Analysis.pdf" download class="underlined">PDF</a>)',
+        '<a href="reports/salted-leeches.html" class="underlined">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a> (<a href="reports/Salted_Leeches.pdf" download class="underlined">PDF</a>)',
+        '<a href="reports/shiny-nemesis.html" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a> (<a href="reports/Shiny_Nemesis.pdf" download class="underlined">PDF</a>)'
     ];
 
     // Generate work HTML from array
@@ -141,7 +141,12 @@ function handleCommand() {
     syncCursor();
 }
 
-window.addEventListener('click', () => {document.getElementById('userInput').focus()})
+window.addEventListener('click', (event) => {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed) return;
+    if (event.target.closest('a, input, button, label')) return;
+    document.getElementById('userInput').focus();
+})
 
 // Populate work list on page load
 document.addEventListener('DOMContentLoaded', function() {

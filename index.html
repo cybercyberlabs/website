@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CyberCyber Labs</title>
+    <link rel="alternate" type="application/rss+xml" title="CyberCyber Labs" href="feed.xml">
     <style>
         .prompt input,body{color:#0f0;font-family:'Courier New',Courier,monospace}.prompt,body{display:flex}.command,body,ul{margin:0}li,ul{list-style-type:none}body{background-color:#000;height:95vh;flex-direction:column;justify-content:flex-end;padding:10px}.terminal{width:100%;box-sizing:border-box}.command,.prompt input,.prompt span,.response{color:#0f0}a{color:#0f0;text-decoration:none}a:hover{text-decoration:underline}.underlined{text-decoration:underline;}.logo{color:#0f0;font-family:'Courier New',Courier,monospace;font-size:0.7em;line-height:1;white-space:pre;overflow-x:auto;margin:10px 0;}.prompt{margin:20px 0 0;align-items:center}.input-wrap{position:relative;flex:1;display:flex;align-items:center}.prompt input{background:0 0;border:none;font-size:1em;flex:1;caret-color:transparent;outline:none}.prompt:focus-within{text-shadow:0 0 6px #0f0}.prompt:focus-within .cursor{display:inline-block}.input-mirror{position:absolute;left:0;top:50%;transform:translateY(-50%);visibility:hidden;white-space:pre;pointer-events:none}.cursor{display:none;position:absolute;top:50%;left:0;transform:translateY(-50%);width:.65em;height:1em;background:#0f0;box-shadow:0 0 6px #0f0;animation:blink 1s steps(1,end) infinite;pointer-events:none}@keyframes blink{50%{opacity:0}}.terminal-body{overflow-y:auto;flex:1;display:flex;flex-direction:column;justify-content:flex-end}ul{padding-left:20}
     </style>
@@ -26,6 +27,7 @@
             <p class="command">Command Line Curiosity</p>
             <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com" class="underlined">contact@cybercyberlabs.com</a></p>
             <p class="command"><br/>Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer" class="underlined">cybercyber.co.il</a>.</p>
+            <p class="command"><br/>Subscribe to new reports via <a href="feed.xml" class="underlined">RSS</a>.</p>
             <div class="command"><br/>Recent work:
                 <ul id="workList">
                 </ul>
@@ -49,20 +51,23 @@
         </div>
     </div>
 
+    <script src="publications.js"></script>
     <script>
-    // Work content array - shared between initial page load and work command
-    const workContent = [
-        '<a href="reports/watermark-my-words.html" class="underlined">October 2026: Watermark My Words - When AI provenance starts changing the answer</a> (<a href="reports/Watermark-My-Words.pdf" download class="underlined">PDF</a>)',
-        '<a href="reports/lazy-vibes.html" class="underlined">September 2026: Lazy Vibes - Working files of an operation that told AI agents to pentest: scanners, exploit scripts, copied source, credentials, and command agents</a> (<a href="reports/Lazy-Vibes.pdf" download class="underlined">PDF</a>)',
-        '<a href="reports/inside-exposed-c2.html" class="underlined">August 2026: Inside Exposed C2 - Brazilian government compromise, credential theft, mass exploitation, cryptomining, and SEO malware</a> (<a href="reports/Inside-Exposed-C2.pdf" download class="underlined">PDF</a>)',
-        '<a href="reports/spyder-fighter.html" class="underlined">June 2026: Spyder Fighter - Analysis of Spyder malware targeting an Indian political office, including defensive C2 sinkholing.</a> (<a href="reports/Spyder-Fighter-Analysis.pdf" download class="underlined">PDF</a>)',
-        '<a href="reports/salted-leeches.html" class="underlined">April 2025: Salted Leeches - An investigation into a Chinese online scam ring infrastructure</a> (<a href="reports/Salted_Leeches.pdf" download class="underlined">PDF</a>)',
-        '<a href="reports/shiny-nemesis.html" class="underlined">December 2024: Shiny Hunters - Mass scanning effort targeting AWS customers</a> (<a href="reports/Shiny_Nemesis.pdf" download class="underlined">PDF</a>)'
-    ];
+    function escapeHtml(value) {
+        return String(value).replace(/[&<>"']/g, function (ch) {
+            return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch];
+        });
+    }
 
-    // Generate work HTML from array
+    function workItem(item) {
+        const label = escapeHtml(item.label + ': ' + item.title + ' - ' + item.summary);
+        const page = escapeHtml(item.html);
+        const pdf = escapeHtml(item.pdf);
+        return '<a href="' + page + '" class="underlined">' + label + '</a> (<a href="' + pdf + '" download class="underlined">PDF</a>)';
+    }
+
     function generateWorkHTML() {
-        return '<ul>' + workContent.map(item => `<li>${item}</li>`).join('') + '</ul>';
+        return '<ul>' + publications.map(item => '<li>' + workItem(item) + '</li>').join('') + '</ul>';
     }
 
     function xorEncryptDecrypt(input, key) {
@@ -94,7 +99,8 @@ function handleCommand() {
         "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "cybercyber": "CyberCyber to you too!",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: Information about us</li><li>contact: How to get in touch</li><li>work: Display recent work</li><li>who: Meet the team</li><li>help: Display this help message</li><li>podcast: Open the podcast page</li><li>clear: Reload the terminal</li></ul>',
+        "help": 'Available commands:<ul><li>about: Information about us</li><li>contact: How to get in touch</li><li>work: Display recent work</li><li>rss: Subscribe to new reports</li><li>who: Meet the team</li><li>help: Display this help message</li><li>podcast: Open the podcast page</li><li>clear: Reload the terminal</li></ul>',
+        "rss": 'Subscribe to new reports via <a href="feed.xml">RSS</a>.',
         "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer">this link</a>.',
         "work": generateWorkHTML(),
         "who": '<ul><li>Noam Rotem - Building systems by day, breaking them by night (pastries optional).</li><li>Ran Locar - Data scientist</li></ul>',
@@ -154,9 +160,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const workList = document.getElementById('workList');
     const userInput = document.getElementById('userInput');
 
-    workContent.forEach(item => {
+    publications.forEach(item => {
         const li = document.createElement('li');
-        li.innerHTML = item;
+        li.innerHTML = workItem(item);
         workList.appendChild(li);
     });
 

@@ -1,0 +1,24 @@
+---
+description: Publish a report and rebuild the RSS feed before deploying
+alwaysApply: true
+---
+
+# Publishing a report
+
+This site is static. GitHub Pages serves the `main` branch root at https://cybercyberlabs.com/. Pages does not build the feed, so the generated files have to be committed.
+
+When adding a report:
+
+1. Add `reports/<slug>.html` in the existing Vim reader layout. Link `../report.css`, `../report.js`, and `<link rel="alternate" type="application/rss+xml" title="CyberCyber Labs" href="../feed.xml">`.
+2. Add the PDF under `reports/`.
+3. Add an entry at the top of `publications.json` with `label`, `title`, `summary`, `published` (`YYYY-MM-DD`), `html`, and `pdf`.
+4. Rebuild the feed and the homepage list before committing:
+
+```bash
+python3 scripts/build_feed.py
+```
+
+5. Commit `publications.json`, `feed.xml`, and `publications.js` with the report. Do not edit `feed.xml` or `publications.js` by hand, and do not add the report only in `index.html`.
+6. Push to `main` to deploy.
+
+`publications.js` is what the homepage and the `work` command render. `feed.xml` is https://cybercyberlabs.com/feed.xml.

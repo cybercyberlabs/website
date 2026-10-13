@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nearly nine years after the warning, Israeli government domains still lack effective protection against email spoofing - CyberCyber Labs</title>
+    <link rel="stylesheet" href="../report.css">
+    <link rel="alternate" type="application/rss+xml" title="CyberCyber Labs" href="../feed.xml">
+</head>
+<body>
+<div class="vim">
+<div class="buf">
+<article>
+<p class="byline">EMAIL AUTHENTICATION</p>
+<h1>Nearly nine years after the warning, Israeli government domains still lack effective protection against email spoofing</h1>
+<p class="byline">13 October 2026</p>
+<h2>TL;DR</h2>
+<p>In December 2017, Israel's National Cyber Security Authority (the predecessor of today's Israel National Cyber Directorate) published guidance on SPF, DKIM and DMARC to reduce email impersonation [3]. Our DNS audit on 13 October 2026 found that <strong>nine of the 18 government domains examined use <code>p=none</code></strong>, a DMARC policy that does not ask receiving mail servers to reject or quarantine messages that fail authentication. These include domains used by the ministries of Finance, Foreign Affairs, Education and Health, as well as the Tax Authority. We also found no DMARC record of its own for <code>mossad.gov.il</code>, and no SPF record at the root of that domain. Receiving servers may use the policy published for <code>gov.il</code> instead, but that policy does not request rejection either.</p>
+<h2>Findings</h2>
+<p>An attacker does not need much technical knowledge to put a government address, such as <code>anyone@any-domain.gov.il</code>, in the sender field of an email. The message can be sent without access to a government mailbox or mail server. A receiving mail service can check whether the sender is authorized to use the claimed domain, and DMARC allows the domain owner to specify what should happen when that check fails. In nine of the domains we examined, the published policy is <code>p=none</code>, meaning the domain owner does not ask receiving servers to reject or quarantine messages that fail DMARC authentication.</p>
+<table>
+<tr><th><strong>Domain</strong></th><th><strong>DMARC policy</strong></th></tr>
+<tr><td><code>gov.il</code></td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>mof.gov.il</code> — Ministry of Finance</td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>mfa.gov.il</code> — Ministry of Foreign Affairs</td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>health.gov.il</code> — Ministry of Health</td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>education.gov.il</code> — Ministry of Education</td><td><code>p=none</code></td></tr>
+<tr><td><code>taxes.gov.il</code> — Tax Authority</td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>moin.gov.il</code> — Ministry of Interior</td><td><code>p=none; sp=none</code></td></tr>
+<tr><td><code>moh.gov.il</code> — Ministry of Health</td><td><code>p=none</code></td></tr>
+<tr><td><code>energy.gov.il</code> — Ministry of Energy</td><td><code>p=none; sp=none</code></td></tr>
+</table>
+<p>For three other domains — <code>mossad.gov.il</code>, <code>govextra.gov.il</code> and <code>data.gov.il</code> — we found no DMARC record published by the domain itself. There was also no SPF record at the root of <code>mossad.gov.il</code>. Some receiving mail servers may look for a policy at the parent domain, <code>gov.il</code>, but the policy there is <code>p=none; sp=none</code> and likewise does not request rejection of messages that fail authentication. In the records we examined, none of these domains has a published policy asking receiving servers to reject such messages.</p>
+<p>The Ministry of Justice (<code>justice.gov.il</code>) and Ministry of Agriculture (<code>moag.gov.il</code>) both publish <code>p=reject</code> for their main domains, but their <code>sp=none</code> setting leaves covered subdomains without the same rejection policy. The Israel Police (<code>police.gov.il</code>), Prime Minister's Office (<code>pmo.gov.il</code>), Ministry of Transport (<code>mot.gov.il</code>) and Geological Survey (<code>gsi.gov.il</code>) publish rejection policies for their subdomains as well. We also found that <code>gov.il</code>, <code>mof.gov.il</code> and <code>energy.gov.il</code> use the same DMARC record, <code>dmarc.dmarc.gov.il</code>, which is configured with <code>p=none; sp=none</code>.</p>
+<h2>What do SPF, DKIM and DMARC do?</h2>
+<h3>SPF (Sender Policy Framework)</h3>
+<p>SPF allows an organization to publish a list of mail servers authorized to send emails on its behalf. When an email arrives, the receiving server can check whether it came from an authorized server.</p>
+<p>However, SPF does not necessarily verify the sender address visible to the recipient, so SPF alone cannot prevent email impersonation.</p>
+<h3>DKIM (DomainKeys Identified Mail)</h3>
+<p>DKIM allows an organization to digitally sign outgoing emails. The receiving server can verify that the email was authorized by the signing domain and that its signed contents were not altered in transit.</p>
+<p>However, DKIM does not necessarily verify that the signing domain matches the sender address visible to the recipient, so DKIM alone cannot prevent email impersonation.</p>
+<h3>DMARC (Domain-based Message Authentication, Reporting and Conformance)</h3>
+<p>DMARC builds on SPF and DKIM to verify that an email is authorized to use the sender address visible to the recipient. It allows an organization to instruct receiving mail servers what to do when verification fails: accept the message normally (<code>none</code>), send it to spam (<code>quarantine</code>), or reject it (<code>reject</code>).</p>
+<p>Without an enforcing DMARC policy, even emails that fail authentication may still reach the recipient.</p>
+<h2>The risks</h2>
+<p>On 27 July 2026, the Israel Tax Authority warned about fraudulent emails sent in its name, claiming that recipients were under investigation for tax offences. The messages included links intended to steal personal information and account credentials [1]. The Israel National Cyber Directorate also issued alerts in December 2025 and February 2026 about emails impersonating the Israel Police [2]. Someone who believes a message came from a government authority may follow a link or give away information they would never share with an unknown sender.</p>
+<p>Seeing an official government address in the sender field can make a fraudulent message more convincing, even though that address alone proves nothing about who sent it. When a domain publishes <code>p=none</code>, it is not asking receiving mail servers to reject messages that fail DMARC authentication, leaving the outcome to the providers’ own filters and other security measures.</p>
+<h2>What needs to happen now</h2>
+<p>Changing a DNS record from <code>p=none</code> to <code>p=reject</code> takes only a few minutes. Doing it without disrupting legitimate government email takes more work. Alongside their normal mail servers, ministries use older applications, automated notification systems and external suppliers that send email on their behalf. Some of these systems may send messages with the correct visible address but still fail the authentication checks DMARC relies on. Switching directly to rejection could therefore block legitimate notifications and correspondence, including messages that citizens depend on.</p>
+<p>Each organization needs to identify the systems that legitimately send mail, working with the teams that operate its applications and with external suppliers. It then needs to correct SPF and DKIM configurations so that authentication matches the visible sender domain, and use DMARC reports to find what is still failing. Once legitimate mail passes the checks, the policy can move from monitoring to quarantine and finally rejection, while checking that essential messages continue to be delivered. For organizations operating under ISO/IEC 27001, this is also a risk to be assessed and treated as part of their security management, even though the standard does not specifically require DMARC [4].</p>
+<p>The right change depends on how each domain is used. A domain that never sends email can publish records stating that no server is authorized to send on its behalf, together with a rejection policy, without affecting legitimate outgoing mail. The Ministry of Justice and Ministry of Agriculture need to address their subdomain policies, while changes to the shared <code>dmarc.dmarc.gov.il</code> record require coordination across the domains using it, so that fixing one does not disrupt another.</p>
+<p>Maintaining government email systems is complicated, particularly when old software and external suppliers are involved, but that is no justification for leaving citizens exposed to phishing attacks that established safeguards can reduce. The government has had guidance on these mechanisms since 2017. Nearly nine years is more than enough time to identify the systems that need fixing and put proper protection in place.</p>
+<h2>Sources</h2>
+<p>[1] Israel Tax Authority, <strong>Fraud warning issued on 27 July 2026</strong> (Hebrew).</p>
+<p><a href="https://www.gov.il/he/pages/note270726-1">https://www.gov.il/he/pages/note270726-1</a></p>
+<p>[2] Israel National Cyber Directorate, <strong>Alert 1950B concerning impersonation of the Israel Police, 23 December 2025</strong> (Hebrew).</p>
+<p><a href="https://www.gov.il/BlobFolder/reports/alert_1950b/he/ALERT-CERT-IL-W-1950B.pdf">https://www.gov.il/BlobFolder/reports/alert_1950b/he/ALERT-CERT-IL-W-1950B.pdf</a></p>
+<p><strong>Updated alert, 9 February 2026</strong> (Hebrew).</p>
+<p><a href="https://www.gov.il/BlobFolder/reports/alert_1950c/he/ALERT-CERT-IL-W-1950C.pdf">https://www.gov.il/BlobFolder/reports/alert_1950c/he/ALERT-CERT-IL-W-1950C.pdf</a></p>
+<p>[3] National Cyber Security Authority, <strong>Guidance on SPF, DKIM and DMARC, December 2017</strong> (Hebrew).</p>
+<p><a href="https://www.gov.il/BlobFolder/reports/dmarc/he/DMARC-CERT-IL-W-350.pdf">https://www.gov.il/BlobFolder/reports/dmarc/he/DMARC-CERT-IL-W-350.pdf</a></p>
+<p>[4] International Organization for Standardization, <strong>ISO/IEC 27001:2022 — Information security management</strong>.</p>
+<p><a href="https://www.iso.org/standard/27001">https://www.iso.org/standard/27001</a></p>
+</article>
+<div class="tildes" id="tildes" aria-hidden="true"></div>
+</div>
+<footer class="vim-foot">
+    <div class="statusline">
+        <span class="status-file"></span>
+        <span class="status-actions"><span class="status-lines"></span><a class="pdf-link" href="Israeli-Government-Email.pdf" download>pdf</a><a href="../index.html">:q close</a></span>
+    </div>
+    <form class="cmdline" id="cmdline">
+        <label for="cmd">:</label>
+        <input id="cmd" autocomplete="off" spellcheck="false" aria-label="Vim command. Type q and press Enter to close and return home.">
+        <span class="cmdmsg" id="cmdmsg"></span>
+    </form>
+</footer>
+</div>
+<script src="../report.js"></script>
+</body>
+</html>

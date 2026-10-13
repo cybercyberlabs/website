@@ -9,6 +9,14 @@
   "publications": [
     {
       "label": "October 2026",
+      "title": "Nearly nine years after the warning, Israeli government domains still lack effective protection against email spoofing",
+      "summary": "Nine of 18 government domains still publish DMARC p=none, including Finance, Foreign Affairs, Education, Health and the Tax Authority",
+      "published": "2026-10-13",
+      "html": "reports/israeli-government-email.html",
+      "pdf": "reports/Israeli-Government-Email.pdf"
+    },
+    {
+      "label": "October 2026",
       "title": "Watermark My Words",
       "summary": "When AI provenance starts changing the answer",
       "published": "2026-10-08",

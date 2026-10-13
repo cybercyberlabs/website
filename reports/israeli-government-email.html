@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nearly nine years after the warning, Israeli government domains still lack effective protection against email spoofing - CyberCyber Labs</title>
+    <title>Israeli Government Email - CyberCyber Labs</title>
     <link rel="stylesheet" href="../report.css">
     <link rel="alternate" type="application/rss+xml" title="CyberCyber Labs" href="../feed.xml">
 </head>
@@ -12,7 +12,8 @@
 <div class="buf">
 <article>
 <p class="byline">EMAIL AUTHENTICATION</p>
-<h1>Nearly nine years after the warning, Israeli government domains still lack effective protection against email spoofing</h1>
+<h1>Israeli Government Email</h1>
+<p class="deck">Nine of 18 government domains still publish DMARC p=none</p>
 <p class="byline">13 October 2026</p>
 <h2>TL;DR</h2>
 <p>In December 2017, Israel's National Cyber Security Authority (the predecessor of today's Israel National Cyber Directorate) published guidance on SPF, DKIM and DMARC to reduce email impersonation [3]. Our DNS audit on 13 October 2026 found that <strong>nine of the 18 government domains examined use <code>p=none</code></strong>, a DMARC policy that does not ask receiving mail servers to reject or quarantine messages that fail authentication. These include domains used by the ministries of Finance, Foreign Affairs, Education and Health, as well as the Tax Authority. We also found no DMARC record of its own for <code>mossad.gov.il</code>, and no SPF record at the root of that domain. Receiving servers may use the policy published for <code>gov.il</code> instead, but that policy does not request rejection either.</p>

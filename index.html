@@ -24,7 +24,6 @@
                   ░██                                                  ░██                                                                             
             ░███████                                             ░███████                                                                              
                                                                                                                                                                    </pre>
-            <p class="command">Command Line Curiosity</p>
             <p class="command"><br/>Contact us: <a href="mailto:contact@cybercyberlabs.com" class="underlined">contact@cybercyberlabs.com</a></p>
             <p class="command"><br/>Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer" class="underlined">cybercyber.co.il</a>.</p>
             <p class="command"><br/>Subscribe to new reports via <a href="feed.xml" class="underlined">RSS</a>.</p>
@@ -59,15 +58,16 @@
         });
     }
 
-    function workItem(item) {
+    function workItem(item, index) {
         const label = escapeHtml(item.label + ': ' + item.title + ' - ' + item.summary);
         const page = escapeHtml(item.html);
         const pdf = escapeHtml(item.pdf);
-        return '<a href="' + page + '" class="underlined">' + label + '</a> (<a href="' + pdf + '" download class="underlined">PDF</a>)';
+        const number = escapeHtml(String(index + 1));
+        return '<a href="' + page + '" class="underlined">' + number + '</a> <a href="' + page + '" class="underlined">' + label + '</a> (<a href="' + pdf + '" download class="underlined">PDF</a>)';
     }
 
     function generateWorkHTML() {
-        return '<ul>' + publications.map(item => '<li>' + workItem(item) + '</li>').join('') + '</ul>';
+        return '<ul>' + publications.map((item, index) => '<li>' + workItem(item, index) + '</li>').join('') + '</ul>';
     }
 
     function xorEncryptDecrypt(input, key) {
@@ -99,7 +99,7 @@ function handleCommand() {
         "about": "We are a team of dedicated cybersecurity professionals with a passion for protecting our digital world.",
         "cybercyber": "CyberCyber to you too!",
         "contact": 'Contact us at <a href="mailto:contact@cybercyberlabs.com">contact@cybercyberlabs.com</a>',
-        "help": 'Available commands:<ul><li>about: Information about us</li><li>contact: How to get in touch</li><li>work: Display recent work</li><li>rss: Subscribe to new reports</li><li>who: Meet the team</li><li>help: Display this help message</li><li>podcast: Open the podcast page</li><li>clear: Reload the terminal</li></ul>',
+        "help": 'Available commands:<ul><li>about: Information about us</li><li>contact: How to get in touch</li><li>work: Display recent work</li><li>read [number]: Open a report from the list</li><li>rss: Subscribe to new reports</li><li>who: Meet the team</li><li>help: Display this help message</li><li>podcast: Open the podcast page</li><li>clear: Reload the terminal</li></ul>',
         "rss": 'Subscribe to new reports via <a href="feed.xml">RSS</a>.',
         "podcast": 'Check out our podcast at <a href="https://cybercyber.co.il/" target="_blank" rel="noopener noreferrer">this link</a>.',
         "work": generateWorkHTML(),
@@ -127,12 +127,26 @@ function handleCommand() {
         const newResponse = document.createElement('p');
         newResponse.className = 'response';
 
+        const readMatch = input.match(/^read(?:\s+\[?(\d+)\]?)?$/i);
         if (commands[input.toLowerCase()]) {
             if (typeof commands[input.toLowerCase()] === 'function') {
                 commands[input.toLowerCase()]();
                 return;
             } else {
                 newResponse.innerHTML = commands[input.toLowerCase()];
+            }
+        } else if (readMatch) {
+            if (!readMatch[1]) {
+                newResponse.innerHTML = 'Usage: read [number]';
+            } else {
+                const number = Number(readMatch[1]);
+                const item = publications[number - 1];
+                if (!item) {
+                    newResponse.innerHTML = 'No report ' + number + '. Reports are numbered 1 to ' + publications.length + '.';
+                } else {
+                    window.location.href = item.html;
+                    return;
+                }
             }
         } else if (input.toLowerCase() === decodedHackCommand) {
             newResponse.innerHTML = decodedHackResponse;
@@ -160,9 +174,9 @@ document.addEventListener('DOMContentLoaded', function() {
     const workList = document.getElementById('workList');
     const userInput = document.getElementById('userInput');
 
-    publications.forEach(item => {
+    publications.forEach((item, index) => {
         const li = document.createElement('li');
-        li.innerHTML = workItem(item);
+        li.innerHTML = workItem(item, index);
         workList.appendChild(li);
     });
 
